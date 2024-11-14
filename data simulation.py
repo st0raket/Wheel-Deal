@@ -4,7 +4,7 @@ from faker import Faker
 
 fake = Faker()
 
-base_df = cars = pd.read_csv("WHeel Data Final.csv")
+base_df = cars = pd.read_csv("Wheel Data Final.csv")
 
 def generate_color():
     return random.choice(["black", "white", "silver", "red", "blue", "beige"])
