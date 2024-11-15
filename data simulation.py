@@ -15,13 +15,16 @@ def generate_body_style():
     """Generates a random car body style."""
     return random.choice(["Sedan", "SUV", "Hatchback", "Convertible", "Coupe", "Wagon", "Van", "Truck"])
 
-def generate_powertrain():
-    """Generates a random powertrain type."""
+def generate_fuel_type():
+    """Generates a random fuel type."""
     return random.choice(["Gasoline", "Diesel", "Electric", "Hybrid", "Plug-in Hybrid"])
 
 def generate_num_of_prev_owners():
     """Generates a random number of previous owners."""
     return random.randint(1, 5)
+
+def generate_damage():
+    return random.choice(["Total", "None", "Low", "Medium"])
 
 def generate_estimated_price():
     """Generates an estimated price for the car."""
@@ -38,8 +41,9 @@ def augment_data(base_path, output_path):
 
     logger.info("Generating new columns")
     base_df["Color"] = [generate_color() for _ in range(len(base_df))]
+    base_df["Damage"] = [generate_damage() for _ in range(len(base_df))]
     base_df["Body_style"] = [generate_body_style() for _ in range(len(base_df))]
-    base_df["Powertrain"] = [generate_powertrain() for _ in range(len(base_df))]
+    base_df["Fuel_type"] = [generate_fuel_type() for _ in range(len(base_df))]
     base_df["Num_of_prev_owners"] = [generate_num_of_prev_owners() for _ in range(len(base_df))]
     base_df["Estimated_price"] = [generate_estimated_price() for _ in range(len(base_df))]
 
