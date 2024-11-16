@@ -1,8 +1,8 @@
-rom sqlalchemy import (
+from sqlalchemy import (
     Column, Integer, String, Float, Date, ForeignKey
 )
 from sqlalchemy.orm import relationship
-from database import Base, engine
+from database1 import Base, engine
 
 # Dimension Tables
 
