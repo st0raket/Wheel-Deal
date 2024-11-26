@@ -1,11 +1,11 @@
 import traceback
 import pandas as pd
 from sqlalchemy.orm import Session
-from database import engine, SessionLocal
-from models import (
+from etl.Database.database import engine, SessionLocal
+from etl.Database.models import (
     CarMake, Model, FuelType, Color, BodyStyle, Transmission, Option, Damage, Cars
 )
-from data_simulation import augment_data
+from etl.Database.data_simulation import augment_data
 from loguru import logger
 
 # Define paths
