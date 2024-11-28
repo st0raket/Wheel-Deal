@@ -1,17 +1,17 @@
 import traceback
 import pandas as pd
 from sqlalchemy.orm import Session
-from etl.Database.database import engine, SessionLocal
-from etl.Database.models import (
+from Database.database import engine, SessionLocal
+from Database.models import (
     CarMake, Model, FuelType, Color, BodyStyle, Transmission, Option, Damage, Cars
 )
-from etl.Database.data_simulation import augment_data
+from Database.data_simulation import augment_data
 from loguru import logger
-
+CSV_FOLDER = "./Database/csv/"
 # Define paths
-BASE_CSV_PATH = "Wheel Data Final.csv"  # Base CSV file path
-AUGMENTED_CSV_PATH = "car_sales_augmented.csv"  # Augmented CSV file path
-FACT_CSV_PATH = "car_sales_fact.csv"  # Fact table CSV file path
+BASE_CSV_PATH = CSV_FOLDER + "Wheel Data Final.csv"  # Base CSV file path
+AUGMENTED_CSV_PATH = CSV_FOLDER + "car_sales_augmented.csv"  # Augmented CSV file path
+FACT_CSV_PATH = CSV_FOLDER + "car_sales_fact.csv"  # Fact table CSV file path
 TABLE_NAME = "Cars"
 
 # Predefined Values
@@ -38,7 +38,7 @@ def load_to_database(df, table_name, engine):
     """
     try:
         logger.info(f"Loading data into the database table: {table_name}")
-        df.to_sql(table_name, con=engine, if_exists="replace", index=False)
+        df.to_sql(table_name, con=engine, if_exists="replace", index=False, method="multi", chunksize=5000)
         logger.info(f"Data successfully loaded into {table_name}")
     except Exception:
         logger.error(f"Error loading data to database: {traceback.format_exc()}")

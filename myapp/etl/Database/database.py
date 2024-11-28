@@ -9,7 +9,7 @@ load_dotenv(".env")
 
 # Get the database URL from environment variables
 DATABASE_URL = os.environ.get("DATABASE_URL")
-
+print("Database:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::",DATABASE_URL)
 # Create the SQLAlchemy engine
 engine = sql.create_engine(DATABASE_URL)
 

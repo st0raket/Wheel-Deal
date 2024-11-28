@@ -1,12 +1,18 @@
 FROM python:3.10-slim-bullseye
 
+# Install necessary system packages
 RUN apt-get update && apt-get install -y \
-    build-essential libpq-dev libfreetype6-dev libpng-dev libjpeg-dev \
+    build-essential \
+    libpq-dev libfreetype6-dev libpng-dev libjpeg-dev \
     libblas-dev liblapack-dev gfortran \
+    default-libmysqlclient-dev pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /etl
+
+# Set PYTHONPATH for module resolution
+ENV PYTHONPATH=/etl
 
 # Copy requirements file and install dependencies
 COPY requirements.txt . 
