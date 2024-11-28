@@ -24,7 +24,7 @@ Faker==18.10.0
 psycopg2-binary==2.9.8
 
 # Optional (if using MySQL)
-mysqlclient==2.1.2
+mysqlclient==2.2.6
 
 # Optional (if using SQLite)
 pysqlite3-binary==0.4.6
