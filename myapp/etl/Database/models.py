@@ -81,6 +81,7 @@ class Cars(Base):
     Transmission_ID = Column(Integer, ForeignKey("Transmission.ID"), nullable=False)
     Options_ID = Column(Integer, ForeignKey("Options.ID"), nullable=False)
     Damage_ID = Column(Integer, ForeignKey("Damage.ID"), nullable=False)
+    Car_make_ID = Column(Integer, ForeignKey("Car_make.ID"), nullable=False)
 
     Year = Column(Integer, nullable=False)
     Mileage = Column(Float, nullable=False)
@@ -98,6 +99,7 @@ class Cars(Base):
     transmission = relationship("Transmission")
     options = relationship("Option")
     damage = relationship("Damage")
+    car_make = relationship("CarMake")
 
 # Create all tables
 Base.metadata.create_all(engine)

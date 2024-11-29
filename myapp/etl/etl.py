@@ -7,6 +7,11 @@ from Database.models import (
 )
 from Database.data_simulation import augment_data
 from loguru import logger
+from sqlalchemy.exc import IntegrityError
+import psycopg2
+from psycopg2.extras import execute_batch
+import numpy as np
+
 CSV_FOLDER = "./Database/csv/"
 # Define paths
 BASE_CSV_PATH = CSV_FOLDER + "Wheel Data Final.csv"  # Base CSV file path
@@ -31,88 +36,133 @@ TRANSMISSIONS = ["Automatic", "Manual"]
 OPTIONS = ["Base", "Advanced", "Luxe", "Full"]
 DAMAGES = ["Total", "None", "Low", "Medium"]
 
-# Function to load a DataFrame into the database
 def load_to_database(df, table_name, engine):
     """
-    Load a DataFrame into the specified database table.
+    Load data into the specified database table using psycopg2's execute_batch.
     """
+    import psycopg2
+    from psycopg2.extras import execute_batch
+    import numpy as np
+
     try:
-        logger.info(f"Loading data into the database table: {table_name}")
-        df.to_sql(table_name, con=engine, if_exists="replace", index=False, method="multi", chunksize=5000)
-        logger.info(f"Data successfully loaded into {table_name}")
-    except Exception:
-        logger.error(f"Error loading data to database: {traceback.format_exc()}")
-        raise
+        conn_params = {
+            "dbname": "cars",
+            "user": "postgres",
+            "password": "postgrespostgres",
+            "host": "postgresql_db",
+            "port": 5432,
+        }
+        conn = psycopg2.connect(**conn_params)
+        cursor = conn.cursor()
+
+        # Ensure table name is quoted
+        table_name_quoted = f'"{table_name}"'
+
+        # Prepare the INSERT query with placeholders
+        insert_query = f"""
+            INSERT INTO {table_name_quoted} (
+                "ID", "Car_make_ID", "Model_ID", "Fuel_type_ID", "Color_ID",
+                "Body_style_ID", "Transmission_ID", "Options_ID", "Damage_ID",
+                "Year", "Mileage", "Horsepower", "Website_post_date",
+                "Sell_date", "Num_of_prev_owners", "Estimated_price"
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+
+        # Convert DataFrame to a list of tuples, ensuring native Python types
+        data = df.to_records(index=False)
+        data = [
+            tuple(
+                int(x) if isinstance(x, np.integer) else
+                float(x) if isinstance(x, np.floating) else
+                str(x) if isinstance(x, np.datetime64) else
+                x
+                for x in row
+            )
+            for row in data
+        ]
+
+        # Use execute_batch for efficient bulk inserts
+        execute_batch(cursor, insert_query, data)
+
+        conn.commit()
+        print(f"Data successfully loaded into table {table_name}")
+    except Exception as e:
+        print(f"Error loading data to database: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
 
 # Function to populate predefined dimension tables
 def populate_predefined_dimension_tables(session):
-    """
-    Populate predefined values for all dimension tables, including model-to-make mapping.
-
-    Args:
-        session: SQLAlchemy session.
-    """
     logger.info("Populating predefined dimension tables")
+    try:
+        # Populate car makes and models
+        car_make_records = {}
+        for make in CAR_MAKE:
+            car_make = CarMake(car_make=make)
+            try:
+                session.add(car_make)
+                session.flush()  # Get ID for model-to-make mapping
+                car_make_records[make] = car_make.ID
+            except IntegrityError:
+                session.rollback()  # Ignore duplicates
+                car_make = session.query(CarMake).filter_by(car_make=make).one()
+                car_make_records[make] = car_make.ID
 
-    # Populate car makes and models
-    car_make_records = {}
-    for make in CAR_MAKE:
-        car_make = CarMake(car_make=make)
-        session.add(car_make)
-        session.flush()  # Get ID for model-to-make mapping
-        car_make_records[make] = car_make.ID  # Store the ID
+        for make, model_list in MODELS.items():
+            car_make_id = car_make_records[make]
+            for model in model_list:
+                model_record = Model(model=model, Car_make_id=car_make_id)
+                try:
+                    session.add(model_record)
+                    session.flush()
+                except IntegrityError:
+                    session.rollback()
 
-    for make, model_list in MODELS.items():
-        car_make_id = car_make_records[make]
-        for model in model_list:
-            session.add(Model(model=model, Car_make_id=car_make_id))
+        # Populate other dimension tables
+        dimension_data_mapping = {
+            "FuelType": ("fuel_type", FUEL_TYPES),
+            "Color": ("color", COLORS),
+            "BodyStyle": ("body_style", BODY_STYLES),
+            "Transmission": ("transmission", TRANSMISSIONS),
+            "Option": ("option", OPTIONS),
+            "Damage": ("damage", DAMAGES),
+        }
 
-    # Populate other dimension tables
-    for fuel in FUEL_TYPES:
-        session.add(FuelType(fuel_type=fuel))
-    for color in COLORS:
-        session.add(Color(color=color))
-    for body_style in BODY_STYLES:
-        session.add(BodyStyle(body_style=body_style))
-    for transmission in TRANSMISSIONS:
-        session.add(Transmission(transmission=transmission))
-    for option in OPTIONS:
-        session.add(Option(option=option))
-    for damage in DAMAGES:
-        session.add(Damage(damage=damage))
+        for model_name, (column_name, data_list) in dimension_data_mapping.items():
+            model_class = globals()[model_name]
+            for value in data_list:
+                record = model_class(**{column_name: value})
+                try:
+                    session.add(record)
+                    session.flush()
+                except IntegrityError:
+                    session.rollback()
 
-    session.commit()
-    logger.info("Predefined dimension tables populated successfully")
+        session.commit()
+        logger.info("Predefined dimension tables populated successfully")
+
+    except Exception:
+        session.rollback()
+        logger.error("Error populating dimension tables")
+        logger.error(traceback.format_exc())
+        raise
 
 # Function to fetch mappings from dimensional tables
 def get_mapping(session, model, column_name):
-    """
-    Create a mapping dictionary from a dimensional table.
-
-    Args:
-        session: SQLAlchemy session.
-        model: SQLAlchemy model for the table.
-        column_name: Column name to map.
-
-    Returns:
-        dict: Mapping of {value: id}.
-    """
     records = session.query(model).all()
     return {getattr(record, column_name): record.ID for record in records}
 
 # Function to transform augmented data into a fact table
 def transform_to_fact_table(augmented_csv_path, fact_csv_path, session):
-    """
-    Transforms the augmented CSV into a fact table with IDs.
-
-    Args:
-        augmented_csv_path (str): Path to the augmented CSV.
-        fact_csv_path (str): Path to save the fact table CSV.
-        session: SQLAlchemy session.
-    """
     logger.info("Loading augmented CSV")
     df = pd.read_csv(augmented_csv_path)
-
+    
 
     logger.info("Fetching mappings for categorical variables")
     mappings = {
@@ -136,14 +186,12 @@ def transform_to_fact_table(augmented_csv_path, fact_csv_path, session):
     df["Options_id"] = df["Options"].map(mappings["Options"])
     df["Damage_id"] = df["Damage"].map(mappings["Damage"])
 
-    # Keep only necessary columns
     fact_df = df[
         ["Car_make_id", "Model_id", "Fuel_type_id", "Color_id", "Body_style_id",
          "Transmission_id", "Options_id", "Damage_id", "Year", "Mileage",
          "Horsepower", "Website_post_date", "Sell_date", "Num_of_prev_owners", "Estimated_price"]
     ]
 
-    # Add an auto-incrementing ID column
     fact_df.insert(0, "ID", range(1, len(fact_df) + 1))
 
     logger.info(f"Saving fact table to {fact_csv_path}")
@@ -153,29 +201,26 @@ def transform_to_fact_table(augmented_csv_path, fact_csv_path, session):
 
 # Full ETL Process
 def etl_process():
-    """
-    End-to-end ETL process: augment data, create dimension tables, transform to fact table, and load to database.
-    """
     session = SessionLocal()
     try:
-        # Step 1: Augment the base CSV data with new columns
-        logger.info("Starting data generation process")
+        logger.info("Starting data augmentation")
         augment_data(BASE_CSV_PATH, AUGMENTED_CSV_PATH)
 
-        # Step 2: Populate dimension tables
+        logger.info("Populating predefined dimension tables")
         populate_predefined_dimension_tables(session)
 
-        # Step 3: Transform the augmented data into a fact table
+        logger.info("Transforming augmented data into a fact table")
         transform_to_fact_table(AUGMENTED_CSV_PATH, FACT_CSV_PATH, session)
 
-        # Step 4: Load the fact table into the database
         logger.info("Loading fact table into the database")
         fact_df = pd.read_csv(FACT_CSV_PATH)
+        fact_df['Sell_date'] = fact_df['Sell_date'].where(fact_df['Sell_date'].notna(), None)
         load_to_database(fact_df, TABLE_NAME, engine)
 
         logger.info("ETL process completed successfully")
     except Exception:
-        logger.error(f"ETL process failed: {traceback.format_exc()}")
+        logger.error("ETL process failed")
+        logger.error(traceback.format_exc())
     finally:
         session.close()
 
