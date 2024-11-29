@@ -16,57 +16,43 @@
 
     <div class="content-wrapper">
         <div class="panel left-panel">
-            <form class="car-metrics-form">
+            <form id="car-metrics-form">
                 <h3 class="panel-title">Input your car parameters</h3>
 
                 <div class="row-flex justify-even margin-small">
                     <div class="column-flex">
                         <label for="make-select">Make</label>
                         <select id="make-select">
-                            <option>Ford</option>
-                            <option>Mercede-Benz</option>
-                            <option>Audi</option>
-                            <option>Toyota</option>
-                            <option>BMW</option>
+                            <option>Choose</option>
                         </select>
                     </div>
 
                     <div class="column-flex">
                         <label for="model-select">Model</label>
                         <select id="model-select">
-                            <option>Fusion</option>
-                            <option>Focus</option>
-                            <option>X5</option>
-                            <option>C-class</option>
-                            <option>Camry</option>
+                            <option>Choose</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="row-flex justify-even margin-small">
-                    <input type="number" placeholder="Year">
-                    <input type="number" placeholder="Mileage">
-                    <input type="number" placeholder="Horsepower">
+                    <input type="text" placeholder="Year" id="year-input" oninput="clearInvalid()">
+                    <input type="text" placeholder="Mileage" id="mileage-input" oninput="clearInvalid()">
+                    <input type="text" placeholder="Horsepower" id="horsepower-input" oninput="clearInvalid()">
                 </div>
 
                 <div class="row-flex justify-even margin-small">
                     <div class="column-flex">
                         <label for="transmission-select">Transmission</label>
                         <select id="transmission-select">
-                            <option>Manual</option>
-                            <option>Automatic</option>
-                            <option>Semi-Automatic</option>
+                            <option>Choose</option>
                         </select>
                     </div>
 
                     <div class="column-flex">
                         <label for="fueltype-select">Fuel type</label>
                         <select id="fueltype-select">
-                            <option>1</option>
-                            <option>2</option>
-                            <option>3</option>
-                            <option>4</option>
-                            <option>5</option>
+                            <option>Choose</option>
                         </select>
                     </div>
                 </div>
@@ -75,20 +61,14 @@
                     <div class="column-flex">
                         <label for="bodystyle-select">Body Style</label>
                         <select id="bodystyle-select">
-                            <option>Hatchback</option>
-                            <option>Sedan</option>
-                            <option>SUV</option>
+                            <option>Choose</option>
                         </select>
                     </div>
 
                     <div class="column-flex">
                         <label for="color-select">Color</label>
                         <select id="color-select">
-                            <option>Blue</option>
-                            <option>Green</option>
-                            <option>Red</option>
-                            <option>Black</option>
-                            <option>White</option>
+                            <option>Choose</option>
                         </select>
                     </div>
                 </div>
@@ -97,18 +77,14 @@
                     <div class="column-flex">
                         <label for="option-select">Options</label>
                         <select id="option-select">
-                            <option>Option1</option>
-                            <option>Option2</option>
-                            <option>Option3</option>
+                            <option>Choose</option>
                         </select>
                     </div>
 
                     <div class="column-flex">
                         <label for="damage-select">Damage Level</label>
                         <select id="damage-select">
-                            <option>Not Damaged</option>
-                            <option>Partially Damaged</option>
-                            <option>Fully Damaged</option>
+                            <option>Choose</option>
                         </select>
                     </div>
                 </div>
@@ -119,7 +95,24 @@
         </div>
 
         <div class="panel right-panel">
-            <h1>Here is where your results will appear</h1>
+            <h1 id="no-results-title">Here is where your results will appear</h1>
+            <div id="results" class="hidden column-flex">
+                <h1 id="results-title">Estimated retail price</h1>
+                <h1 id="results-predicted-price">1000 $</h1>
+
+                <h3 class="results-detail-row">Make: <span id="results-car-make">Ford</span></h3>
+                <h3 class="results-detail-row">Model: <span id="results-car-model">Focus</span></h3>
+                <h3 class="results-detail-row">Year: <span id="results-car-year">2016</span></h3>
+                <h3 class="results-detail-row">Mileage: <span id="results-car-mileage">20000</span></h3>
+                <h3 class="results-detail-row">Horsepower: <span id="results-car-horsepower">240</span></h3>
+                <h3 class="results-detail-row">Fuel Type: <span id="results-car-fueltype">240</span></h3>
+                <h3 class="results-detail-row">Body Style: <span id="results-car-bodystyle">240</span></h3>
+                <h3 class="results-detail-row">Color: <span id="results-car-color">240</span></h3>
+                <h3 class="results-detail-row">Options: <span id="results-car-options">240</span></h3>
+                <h3 class="results-detail-row">Damage Level: <span id="results-car-damagelevel">240</span></h3>
+
+                <h2>Estimated Resale Time: <span id="results-predicted-time">9 days</span></h2>
+            </div>
         </div>
     </div>
 
@@ -128,11 +121,9 @@
 
 
 
-
-
-
-
-
+    <script src="./options.js"></script>
+    <script src="./services/select_service.js"></script>
+    <script src="./services/prediction_service.js"></script>
     <script src="./index.js"></script>
 </body>
 

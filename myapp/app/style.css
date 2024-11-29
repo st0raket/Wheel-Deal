@@ -57,13 +57,13 @@ body {
     padding: 20px 40px 20px 40px;
 }
 
-.car-metrics-form {
+#car-metrics-form {
     display: flex;
     flex-direction: column;
     font-family: jockey-one;
 }
 
-.car-metrics-form label {
+#car-metrics-form label {
     font-size: 20px;
 }
 
@@ -88,13 +88,14 @@ body {
 select {
     border: none;
     border-radius: 5px;
-    background-color:#d7ed9a;
+    background-color: #d7ed9a;
     margin-right: 20px;
     width: 200px;
     height: 50px;
     font-size: 25px;
     padding-left: 10px;
-    padding-right: 10px 
+    padding-right: 10px;
+
 }
 
 .left-panel {
@@ -106,8 +107,8 @@ select {
     margin-bottom: 10px
 }
 
-#evaluate-button{
-    background-color:#859F3D;
+#evaluate-button {
+    background-color: #859F3D;
     color: white;
     font-style: jockey-one;
     border: none;
@@ -119,4 +120,31 @@ select {
     align-self: end;
     margin-right: 20px;
     margin-top: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+.shown {
+    display: flex;
+}
+
+.results-detail-row {
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
+#results-estimated-price {
+    margin-top: 10px;
+    margin-bottom: 0;
+    color: #859F3D;
+}
+
+input {
+    border: none;
+    width: 100px;
+    background-color: #F6FCDF;
+    padding: 5px;
+    box-sizing: border-box;
 }
