@@ -72,4 +72,26 @@ services:
     volumes:
       - ./app:/usr/share/nginx/html
 
+
+  model:
+    container_name: model_service
+    build:
+      context: ./model
+      dockerfile: Dockerfile
+    environment:
+      - MODEL_STORAGE_PATH=./models
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./model:/model
+      - ./model/models:/model/models
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
   

@@ -4,10 +4,31 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.linear_model import ElasticNet
 from catboost import CatBoostRegressor
+from dotenv import load_dotenv
+import os
+import psycopg2
+import sqlalchemy as sql
+import sqlalchemy.ext.declarative as declarative
+import sqlalchemy.orm as orm
+from sqlalchemy import create_engine
+import pickle
 
-# Load and preprocess data
+# Load environment variables from .env file
+# load_dotenv(".env")
+
+# # Get database credentials from environment variables
+# DB_USER = os.getenv("DB_USER")
+# DB_PASSWORD = os.getenv("DB_PASSWORD")
+# DB_HOST = os.getenv("DB_HOST", "postgresql_db")
+# DB_PORT = os.getenv("DB_PORT", "5432")
+# DB_NAME = os.getenv("DB_NAME") 
+
+
+# engine = create_engine(f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}')
+
+# query = "SELECT * FROM car_sales_data;"  # Replace with your table name
+#data = pd.read_sql(query, con=engine)
 data = pd.read_csv("car_sales_augmented.csv")
-
 # Convert dates and create time-related features
 data['Website_post_date'] = pd.to_datetime(data['Website_post_date'], format='%d.%m.%y', errors='coerce')
 data['Sell_date'] = pd.to_datetime(data['Sell_date'], format='%d.%m.%y', errors='coerce')
@@ -63,3 +84,21 @@ print("Elastic Net Performance:", elastic_net_performance)
 
 print("\n--- Days to Sell Prediction ---")
 print("CatBoost Performance:", catboost_performance)
+
+try:
+    # Save ElasticNet model for price prediction
+    dir = "./models/"
+    price_model_filename = dir + "elastic_net_price_model.pkl"
+    with open(price_model_filename, "wb") as file:
+        pickle.dump(price_model, file)
+
+    # Save CatBoost model for days to sell prediction
+    sell_time_model_filename = dir + "catboost_sell_time_model.pkl"
+    with open(sell_time_model_filename, "wb") as file:
+        pickle.dump(sell_time_model, file)
+
+    print(f"Price prediction model saved as {price_model_filename}")
+    print(f"Days to sell prediction model saved as {sell_time_model_filename}")
+
+except NameError as e:
+    print(f"Error: {e}. Ensure the models are defined before saving.")
