@@ -76,14 +76,14 @@ const clearInvalid = () => {
 
 const collectFormData = () => {
     return {
-        make: makeSelect.value,
-        model: modelSelect.value,
-        transmission: transmissionSelect.value,
-        fueltype: fueltypeSelect.value,
-        bodyStyle: bodyStyleSelect.value,
-        color: colorSelect.value,
-        option: optionSelect.value,
-        damage: damageSelect.value,
+        makeId: makeSelect.value,
+        modelId: modelSelect.value,
+        transmissionId: transmissionSelect.value,
+        fueltypeId: fueltypeSelect.value,
+        bodyStyleId: bodyStyleSelect.value,
+        colorId: colorSelect.value,
+        optionId: optionSelect.value,
+        damageId: damageSelect.value,
         year: yearInput.value,
         mileage: mileageInput.value,
         horsepower: horsepowerInput.value
