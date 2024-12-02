@@ -27,4 +27,4 @@ psycopg2-binary==2.9.8
 mysqlclient==2.2.6
 
 # Optional (if using SQLite)
-pysqlite3-binary==0.4.6
+#pysqlite3-binary==0.4.6
