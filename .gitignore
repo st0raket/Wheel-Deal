@@ -4,6 +4,8 @@ __pycache__/
 *$py.class
 ##
 feedback.md
+pgadmin_data
+postgres_data
 *.DS_Store
 # C extensions
 *.so
