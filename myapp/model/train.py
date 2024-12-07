@@ -5,10 +5,6 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.linear_model import ElasticNet
 from catboost import CatBoostRegressor
 from dotenv import load_dotenv
-import os
-import psycopg2
-import sqlalchemy as sql
-import sqlalchemy.ext.declarative as declarative
 import sqlalchemy.orm as orm
 from sqlalchemy import create_engine
 import pickle
@@ -34,9 +30,6 @@ data['Website_post_date'] = pd.to_datetime(data['Website_post_date'], format='%d
 data['Sell_date'] = pd.to_datetime(data['Sell_date'], format='%d.%m.%y', errors='coerce')
 data['Days_to_sell'] = (data['Sell_date'] - data['Website_post_date']).dt.days
 data['Days_to_sell'] = data['Days_to_sell'].fillna(-1)
-data['Month'] = data['Website_post_date'].dt.month
-data['Quarter'] = data['Website_post_date'].dt.quarter
-data['Day_of_week'] = data['Website_post_date'].dt.dayofweek
 
 # Log transformation for Estimated_price
 data['Log_Estimated_price'] = np.log1p(data['Estimated_price'])
@@ -67,7 +60,7 @@ price_model, elastic_net_performance, price_predictions = train_and_evaluate_mod
 # Add predicted price as a feature for sell time prediction
 data_dummified['Predicted_Log_Price'] = np.nan
 data_dummified.loc[X_price_test.index, 'Predicted_Log_Price'] = price_predictions
-data_dummified['Predicted_Log_Price'].fillna(data_dummified['Log_Estimated_price'], inplace=True)
+data_dummified['Predicted_Log_Price'] = data_dummified['Predicted_Log_Price'].fillna(data_dummified['Log_Estimated_price'])
 
 sell_time_features_dummified = price_features_dummified + ['Predicted_Log_Price']
 X_sell_time = data_dummified[data_dummified['Days_to_sell'] >= 0][sell_time_features_dummified]
