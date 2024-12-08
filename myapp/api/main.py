@@ -154,7 +154,7 @@ async def make_prediction(data: PredictionRequest, db: Session = Depends(get_db)
     if missing_fields:
         raise HTTPException(status_code=401, detail=f"Missing fields: {', '.join(missing_fields)}")
 
-    # Get the corresponding names from the options lists
+    # Get the corresponding names from the database
     make_name = get_name_from_database(db, CarMake, data.makeId)
     model_name = get_name_from_database(db, Model, data.modelId)
     transmission_name = get_name_from_database(db, Transmission, data.transmissionId)

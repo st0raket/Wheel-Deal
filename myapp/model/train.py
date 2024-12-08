@@ -41,7 +41,6 @@ data_dummified = pd.get_dummies(data, columns=categorical_cols, drop_first=True)
 # Features for price prediction
 price_features_dummified = [col for col in data_dummified.columns if col not in ['Estimated_price', 'Log_Estimated_price', 'Days_to_sell', 'Website_post_date', 'Sell_date']]
 X_price = data_dummified[price_features_dummified]
-print(X_price.columns)
 y_price = data_dummified['Log_Estimated_price']
 X_price_train, X_price_test, y_price_train, y_price_test = train_test_split(X_price, y_price, test_size=0.2, random_state=42)
 
