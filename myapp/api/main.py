@@ -1,7 +1,7 @@
 import pandas as pd
 from Database.models import CarMake, Model, FuelType, Color,BodyStyle,Transmission, Option, Damage, Cars
 from Database.database import get_db
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
@@ -58,10 +58,11 @@ class PredictionRequest(BaseModel):
     colorId: int
     optionId: int
     damageId: int
-    year: int
-    mileage: int
-    horsepower: int
-    numPrevOwners: int
+    year: int = Field(..., ge=1886, le=2024, description="Car year must be between 1886 (first car) and the current year.")  # Valid car production years
+    mileage: int = Field(..., ge=0, le=1_000_000, description="Mileage must be a positive integer up to 1,000,000.")  # Reasonable max mileage
+    horsepower: int = Field(..., ge=0, le=2000, description="Horsepower must be between 0 and 2000.")  # Extreme upper limit for high-performance cars
+    numPrevOwners: int = Field(..., ge=0, le=20, description="Number of previous owners must be between 0 and 20.")  # Reasonable max for used cars
+    
 
 # Define the response model for the prediction
 class Prediction(BaseModel):
@@ -89,12 +90,20 @@ async def get_make_options(db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No Make Options available.")
     return [{"id": make.ID, "name": make.car_make} for make in makes]
 
-@app.get("/model-options", response_model=List[OptionResponse])
-async def get_model_options(db: Session = Depends(get_db)):
-    models = db.query(Model).all()
+@app.get("/model-options/{makeId}", response_model=List[OptionResponse])
+async def get_model_options(makeId: int, db: Session = Depends(get_db)):
+    """
+    Retrieve the list of car models for a specific make by makeId.
+    """
+    models = db.query(Model).filter(Model.Car_make_id == makeId).all()
+    
     if not models:
-        raise HTTPException(status_code=404, detail="No Model Options available.")
+        raise HTTPException(
+            status_code=404, detail=f"No models available for makeId {makeId}."
+        )
+        
     return [{"id": model.ID, "name": model.model} for model in models]
+
 
 @app.get("/fuel-type-options", response_model=List[OptionResponse])
 async def get_fuel_type_options(db: Session = Depends(get_db)):
