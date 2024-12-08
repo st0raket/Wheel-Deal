@@ -21,6 +21,7 @@ services:
   pgadmin:  
     container_name: pgadmin
     image: dpage/pgadmin4
+    user: root
     environment:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
@@ -55,10 +56,12 @@ services:
     command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; uvicorn main:app --host 0.0.0.0'
     volumes:
       - ./api:/api
+      - ./model:/model
     ports:
       - 8008:8000
     environment:
       - DATABASE_URL=${DATABASE_URL}
+      - MODEL_STORAGE_PATH=/model/models
     depends_on:
       - db
 
@@ -72,18 +75,5 @@ services:
       - ./app:/usr/share/nginx/html
 
 
-  model:
-    container_name: model_service
-    build:
-      context: ./model
-      dockerfile: Dockerfile
-    environment:
-      - MODEL_STORAGE_PATH=./models
-    volumes:
-      - ./model:/model
-    depends_on:
-      db:
-        condition: service_healthy
-    healthcheck:
-      test: "exit 0"
+
   
