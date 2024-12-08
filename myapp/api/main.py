@@ -1,101 +1,53 @@
-# from Database.models import CarMake, Model, FuelType, Color,BodyStyle,Transmission,Option, Damage, Cars
-# from Database.database import get_db
+import pandas as pd
+from Database.models import CarMake, Model, FuelType, Color,BodyStyle,Transmission, Option, Damage, Cars
+from Database.database import get_db
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 from fastapi import FastAPI, Depends, HTTPException
+import pickle
+import os
+import numpy as np
 
-class Option(BaseModel):
+# Initialize FastAPI app
+app = FastAPI()
+
+def get_name_from_database(db: Session, table, id_value: int):
+    """
+    Retrieve the name corresponding to the given ID from the specified table.
+    """
+    record = db.query(table).filter(table.ID == id_value).first()
+    if record:
+        return record.car_make if table == CarMake else record.model if table == Model else \
+               record.transmission if table == Transmission else record.fuel_type if table == FuelType else \
+               record.body_style if table == BodyStyle else record.color if table == Color else \
+               record.option if table == Option else record.damage if table == Damage else None
+    return None
+
+#Define the data model for prediction input
+class PricePredictionRequest(BaseModel):
+    features: list
+
+class DaysToSellPredictionRequest(BaseModel):
+    price: int
+
+# Load models
+MODEL_DIR = os.getenv("MODEL_STORAGE_PATH", "myapp\model\models")
+price_model_path = os.path.join(MODEL_DIR, "elastic_net_price_model.pkl")
+sell_time_model_path = os.path.join(MODEL_DIR, "catboost_sell_time_model.pkl")
+
+try:
+    with open(price_model_path, "rb") as f:
+        price_model = pickle.load(f)
+    with open(sell_time_model_path, "rb") as f:
+        sell_time_model = pickle.load(f)
+except FileNotFoundError:
+    price_model = None
+
+class OptionResponse(BaseModel):
     id: int
     name: str
-
-class MakeOption(Option):
-    pass
-
-class ModelOption(Option):
-    pass
-
-class TransmissionOption(Option):
-    pass
-
-class FuelTypeOption(Option):
-    pass
-
-class BodyStyleOption(Option):
-    pass
-
-class ColorOption(Option):
-    pass
-
-class CarOption(Option):
-    pass
-
-class DamageOption(Option):
-    pass
-
-# Define the options for each category
-make_options = [
-    {"id": 0, "name": "Ford"},
-    {"id": 1, "name": "Mercedes-Benz"},
-    {"id": 2, "name": "Chevrolet"}
-]
-
-model_options = [
-    {"id": 0, "name": "Focus"},
-    {"id": 1, "name": "C-class"},
-    {"id": 2, "name": "Volt"}
-]
-
-transmission_options = [
-    {"id": 0, "name": "Automatic"},
-    {"id": 1, "name": "Manual"},
-    {"id": 2, "name": "CVT"}
-]
-
-fuel_type_options = [
-    {"id": 0, "name": "Petrol"},
-    {"id": 1, "name": "Diesel"},
-    {"id": 2, "name": "Electric"},
-    {"id": 3, "name": "Hybrid"}
-]
-
-body_style_options = [
-    {"id": 0, "name": "Sedan"},
-    {"id": 1, "name": "SUV"},
-    {"id": 2, "name": "Coupe"},
-    {"id": 3, "name": "Convertible"},
-    {"id": 4, "name": "Hatchback"},
-    {"id": 5, "name": "Wagon"}
-]
-
-color_options = [
-    {"id": 0, "name": "Black"},
-    {"id": 1, "name": "White"},
-    {"id": 2, "name": "Red"},
-    {"id": 3, "name": "Blue"},
-    {"id": 4, "name": "Silver"},
-    {"id": 5, "name": "Grey"},
-    {"id": 6, "name": "Green"}
-]
-
-car_option_options = [
-    {"id": 0, "name": "Sunroof"},
-    {"id": 1, "name": "Leather Seats"},
-    {"id": 2, "name": "Navigation System"},
-    {"id": 3, "name": "Bluetooth Connectivity"},
-    {"id": 4, "name": "Rearview Camera"},
-    {"id": 5, "name": "Heated Seats"}
-]
-
-damage_options = [
-    {"id": 0, "name": "No Damage"},
-    {"id": 1, "name": "Minor Scratch"},
-    {"id": 2, "name": "Dent"},
-    {"id": 3, "name": "Broken Window"},
-    {"id": 4, "name": "Engine Damage"},
-    {"id": 5, "name": "Frame Damage"}
-]
 
 class PredictionRequest(BaseModel):
     makeId: int
@@ -109,6 +61,7 @@ class PredictionRequest(BaseModel):
     year: int
     mileage: int
     horsepower: int
+    numPrevOwners: int
 
 # Define the response model for the prediction
 class Prediction(BaseModel):
@@ -125,114 +78,69 @@ class Prediction(BaseModel):
     year: int
     mileage: int
     horsepower: int
-
-app = FastAPI()
-
-def get_name_from_list(options_list, id_value):
-    for option in options_list:
-        if option['id'] == id_value:
-            return option['name']
-    return None
+    numPrevOwners: int
 
 # Define GET endpoints for each array with documentation
 
-@app.get("/make-options", response_model=List[MakeOption])
-async def get_make_options():
-    """
-    Retrieve the list of available car make options.
-    
-    Returns a list of car makes like Ford, Mercedes-Benz, and Chevrolet.
-    """
-    if not make_options:
+@app.get("/make-options", response_model=List[OptionResponse])
+async def get_make_options(db: Session = Depends(get_db)):
+    makes = db.query(CarMake).all()
+    if not makes:
         raise HTTPException(status_code=404, detail="No Make Options available.")
-    return make_options
+    return [{"id": make.ID, "name": make.car_make} for make in makes]
 
-
-@app.get("/model-options", response_model=List[ModelOption])
-async def get_model_options():
-    """
-    Retrieve the list of available car model options.
-    
-    Returns a list of car models like Focus, C-class, and Volt.
-    """
-    if not model_options:
+@app.get("/model-options", response_model=List[OptionResponse])
+async def get_model_options(db: Session = Depends(get_db)):
+    models = db.query(Model).all()
+    if not models:
         raise HTTPException(status_code=404, detail="No Model Options available.")
-    return model_options
+    return [{"id": model.ID, "name": model.model} for model in models]
 
-
-@app.get("/transmission-options", response_model=List[TransmissionOption])
-async def get_transmission_options():
-    """
-    Retrieve the list of available car transmission options.
-    
-    Returns transmission options like Automatic, Manual, and CVT.
-    """
-    if not transmission_options:
-        raise HTTPException(status_code=404, detail="No Transmission Options available.")
-    return transmission_options
-
-
-@app.get("/fuel-type-options", response_model=List[FuelTypeOption])
-async def get_fuel_type_options():
-    """
-    Retrieve the list of available car fuel type options.
-    
-    Returns fuel types like Petrol, Diesel, Electric, and Hybrid.
-    """
-    if not fuel_type_options:
+@app.get("/fuel-type-options", response_model=List[OptionResponse])
+async def get_fuel_type_options(db: Session = Depends(get_db)):
+    fuel_types = db.query(FuelType).all()
+    if not fuel_types:
         raise HTTPException(status_code=404, detail="No Fuel Type Options available.")
-    return fuel_type_options
+    return [{"id": fuel_type.ID, "name": fuel_type.fuel_type} for fuel_type in fuel_types]
 
-
-@app.get("/body-style-options", response_model=List[BodyStyleOption])
-async def get_body_style_options():
-    """
-    Retrieve the list of available car body style options.
-    
-    Returns body styles like Sedan, SUV, and Coupe.
-    """
-    if not body_style_options:
-        raise HTTPException(status_code=404, detail="No Body Style Options available.")
-    return body_style_options
-
-
-@app.get("/color-options", response_model=List[ColorOption])
-async def get_color_options():
-    """
-    Retrieve the list of available car color options.
-    
-    Returns color options like Black, White, Red, and Blue.
-    """
-    if not color_options:
+@app.get("/color-options", response_model=List[OptionResponse])
+async def get_color_options(db: Session = Depends(get_db)):
+    colors = db.query(Color).all()
+    if not colors:
         raise HTTPException(status_code=404, detail="No Color Options available.")
-    return color_options
+    return [{"id": color.ID, "name": color.color} for color in colors]
 
+@app.get("/body-style-options", response_model=List[OptionResponse])
+async def get_body_style_options(db: Session = Depends(get_db)):
+    body_styles = db.query(BodyStyle).all()
+    if not body_styles:
+        raise HTTPException(status_code=404, detail="No Body Style Options available.")
+    return [{"id": body_style.ID, "name": body_style.body_style} for body_style in body_styles]
 
-@app.get("/car-option-options", response_model=List[CarOption])
-async def get_car_option_options():
-    """
-    Retrieve the list of available car additional options.
-    
-    Returns car options like Sunroof, Leather Seats, and Navigation System.
-    """
-    if not car_option_options:
+@app.get("/transmission-options", response_model=List[OptionResponse])
+async def get_transmission_options(db: Session = Depends(get_db)):
+    transmissions = db.query(Transmission).all()
+    if not transmissions:
+        raise HTTPException(status_code=404, detail="No Transmission Options available.")
+    return [{"id": transmission.ID, "name": transmission.transmission} for transmission in transmissions]
+
+@app.get("/car-option-options", response_model=List[OptionResponse])
+async def get_car_option_options(db: Session = Depends(get_db)):
+    options = db.query(Option).all()
+    if not options:
         raise HTTPException(status_code=404, detail="No Car Option Options available.")
-    return car_option_options
+    return [{"id": option.ID, "name": option.option} for option in options]
 
-
-@app.get("/damage-options", response_model=List[DamageOption])
-async def get_damage_options():
-    """
-    Retrieve the list of available car damage options.
-    
-    Returns damage options like No Damage, Minor Scratch, and Engine Damage.
-    """
-    if not damage_options:
+@app.get("/damage-options", response_model=List[OptionResponse])
+async def get_damage_options(db: Session = Depends(get_db)):
+    damages = db.query(Damage).all()
+    if not damages:
         raise HTTPException(status_code=404, detail="No Damage Options available.")
-    return damage_options
+    return [{"id": damage.ID, "name": damage.damage} for damage in damages]
+
 
 @app.post("/predict", response_model=Prediction)
-async def make_prediction(data: PredictionRequest):
+async def make_prediction(data: PredictionRequest, db: Session = Depends(get_db)):
     """
     Make a prediction based on the provided data and return the predicted price and time.
     The endpoint raises a 401 error if any of the required fields are missing.
@@ -246,27 +154,91 @@ async def make_prediction(data: PredictionRequest):
     if missing_fields:
         raise HTTPException(status_code=401, detail=f"Missing fields: {', '.join(missing_fields)}")
 
-    # Get the corresponding names from the options lists
-    make_name = get_name_from_list(make_options, data.makeId)
-    model_name = get_name_from_list(model_options, data.modelId)
-    transmission_name = get_name_from_list(transmission_options, data.transmissionId)
-    fueltype_name = get_name_from_list(fuel_type_options, data.fueltypeId)
-    bodyStyle_name = get_name_from_list(body_style_options, data.bodyStyleId)
-    color_name = get_name_from_list(color_options, data.colorId)
-    option_name = get_name_from_list(car_option_options, data.optionId)
-    damage_name = get_name_from_list(damage_options, data.damageId)
+    # Get the corresponding names from the database
+    make_name = get_name_from_database(db, CarMake, data.makeId)
+    model_name = get_name_from_database(db, Model, data.modelId)
+    transmission_name = get_name_from_database(db, Transmission, data.transmissionId)
+    fueltype_name = get_name_from_database(db, FuelType, data.fueltypeId)
+    bodyStyle_name = get_name_from_database(db, BodyStyle, data.bodyStyleId)
+    color_name = get_name_from_database(db, Color, data.colorId)
+    option_name = get_name_from_database(db, Option, data.optionId)
+    damage_name = get_name_from_database(db, Damage, data.damageId)
 
     # If any ID is invalid or not found, raise an error
     if not all([make_name, model_name, transmission_name, fueltype_name, bodyStyle_name, color_name, option_name, damage_name]):
         raise HTTPException(status_code=400, detail="Invalid ID provided for one or more fields.")
 
-    # Simulate the logic of prediction (price and time can be calculated here)
-    predicted_price = 25000  # Just a placeholder value, replace with your logic
-    predicted_time = 2.5     # Just a placeholder value, replace with your logic
+    # Prepare the features for prediction models
+    final_features_template = ['Mileage', 'Year', 'Horsepower', 'Num_of_prev_owners', 'Car_make_BMW',
+       'Car_make_Chevrolet', 'Car_make_Ford', 'Car_make_Mercedes-Benz',
+       'Car_make_Toyota', 'Model_5 Series', 'Model_A4', 'Model_A6',
+       'Model_C-Class', 'Model_Camry', 'Model_Corolla', 'Model_E-Class',
+       'Model_Equinox', 'Model_Explorer', 'Model_F-150', 'Model_Fusion',
+       'Model_GLC', 'Model_Impala', 'Model_Malibu', 'Model_Mustang',
+       'Model_Prius', 'Model_Q5', 'Model_Q7', 'Model_RAV4', 'Model_S-Class',
+       'Model_Silverado', 'Model_X3', 'Model_X5', 'Transmission_Manual',
+       'Options_Base', 'Options_Full', 'Options_Luxe', 'Color_black',
+       'Color_blue', 'Color_red', 'Color_silver', 'Color_white',
+       'Damage_Medium', 'Damage_Total', 'Body_style_Coupe',
+       'Body_style_Hatchback', 'Body_style_SUV', 'Body_style_Sedan',
+       'Body_style_Truck', 'Body_style_Van', 'Body_style_Wagon',
+       'Fuel_type_Electric', 'Fuel_type_Gasoline', 'Fuel_type_Hybrid',
+       'Fuel_type_Plug-in Hybrid']
+    
+
+
+    transformed_features = {feature: 0 for feature in final_features_template}
+
+    # Assign numerical features
+    transformed_features['Mileage'] = data.mileage
+    transformed_features['Year'] = data.year
+    transformed_features['Horsepower'] = data.horsepower
+    transformed_features['Num_of_prev_owners'] = data.numPrevOwners
+
+    # Map categorical features to their one-hot encoded counterparts
+    make_mapping = {1: 'Car_make_BMW', 2: 'Car_make_Chevrolet', 3: 'Car_make_Ford', 4: 'Car_make_Mercedes-Benz', 5: 'Car_make_Toyota'}
+    model_mapping = {1: 'Model_5 Series', 2: 'Model_A4', 3: 'Model_A6', 4: 'Model_C-Class', 5: 'Model_Camry'}
+    transmission_mapping = {1: 'Transmission_Manual'}
+    fuel_mapping = {1: 'Fuel_type_Electric', 2: 'Fuel_type_Gasoline', 3: 'Fuel_type_Hybrid'}
+    body_style_mapping = {1: 'Body_style_Coupe', 2: 'Body_style_Hatchback', 3: 'Body_style_SUV'}
+    color_mapping = {1: 'Color_black', 2: 'Color_blue', 3: 'Color_red'}
+    option_mapping = {1: 'Options_Base', 2: 'Options_Full'}
+    damage_mapping = {1: 'Damage_Medium', 2: 'Damage_Total'}
+
+    # Update one-hot encoded fields based on input IDs
+    transformed_features[make_mapping.get(data.makeId, '')] = 1
+    transformed_features[model_mapping.get(data.modelId, '')] = 1
+    transformed_features[transmission_mapping.get(data.transmissionId, '')] = 1
+    transformed_features[fuel_mapping.get(data.fueltypeId, '')] = 1
+    transformed_features[body_style_mapping.get(data.bodyStyleId, '')] = 1
+    transformed_features[color_mapping.get(data.colorId, '')] = 1
+    transformed_features[option_mapping.get(data.optionId, '')] = 1
+    transformed_features[damage_mapping.get(data.damageId, '')] = 1
+
+    # Convert transformed features to the input format expected by the model
+    final_features = [transformed_features[feature] for feature in final_features_template]
+
+
+    # Predict price using the ElasticNet model
+    if not price_model:
+        raise HTTPException(status_code=500, detail="Price model not loaded")
+    try:
+        predicted_price = price_model.predict([final_features])[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error predicting price: {str(e)}")
+
+    # Predict days to sell using the CatBoost model
+    if not sell_time_model:
+        raise HTTPException(status_code=500, detail="Days to sell model not loaded")
+    try:
+        final_features.append(np.log1p(predicted_price))
+        predicted_time = sell_time_model.predict([final_features])[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error predicting days to sell: {str(e)}")
 
     # Return the prediction along with the names of the fields
     return {
-        "price": predicted_price,
+        "price": np.exp(predicted_price),
         "time": predicted_time,
         "make": make_name,
         "model": model_name,
@@ -278,7 +250,7 @@ async def make_prediction(data: PredictionRequest):
         "damage": damage_name,
         "year": data.year,
         "mileage": data.mileage,
-        "horsepower": data.horsepower
+        "horsepower": data.horsepower,
+        "numPrevOwners": data.numPrevOwners
     }
-
 
