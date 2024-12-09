@@ -120,7 +120,6 @@ evaluateButton.addEventListener("click", async (e) => {
         const predictionResults = await predictionService.getPredictionResults(carProperties);
         showPredictionResults(predictionResults);
     } catch (err) {
-        console.log("error to alert", err)
         alert(err)
     }
    
