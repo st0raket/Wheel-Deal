@@ -205,14 +205,82 @@ async def make_prediction(data: PredictionRequest, db: Session = Depends(get_db)
     transformed_features['Num_of_prev_owners'] = data.numPrevOwners
 
     # Map categorical features to their one-hot encoded counterparts
-    make_mapping = {1: 'Car_make_BMW', 2: 'Car_make_Chevrolet', 3: 'Car_make_Ford', 4: 'Car_make_Mercedes-Benz', 5: 'Car_make_Toyota'}
-    model_mapping = {1: 'Model_5 Series', 2: 'Model_A4', 3: 'Model_A6', 4: 'Model_C-Class', 5: 'Model_Camry'}
-    transmission_mapping = {1: 'Transmission_Manual'}
-    fuel_mapping = {1: 'Fuel_type_Electric', 2: 'Fuel_type_Gasoline', 3: 'Fuel_type_Hybrid'}
-    body_style_mapping = {1: 'Body_style_Coupe', 2: 'Body_style_Hatchback', 3: 'Body_style_SUV'}
-    color_mapping = {1: 'Color_black', 2: 'Color_blue', 3: 'Color_red'}
-    option_mapping = {1: 'Options_Base', 2: 'Options_Full'}
-    damage_mapping = {1: 'Damage_Medium', 2: 'Damage_Total'}
+    make_mapping = {
+    1: 'Car_make_BMW',
+    2: 'Car_make_Chevrolet',
+    3: 'Car_make_Ford',
+    4: 'Car_make_Mercedes-Benz',
+    5: 'Car_make_Toyota'
+}
+
+    model_mapping = {
+        1: 'Model_5 Series',
+        2: 'Model_A4',
+        3: 'Model_A6',
+        4: 'Model_C-Class',
+        5: 'Model_Camry',
+        6: 'Model_Corolla',
+        7: 'Model_E-Class',
+        8: 'Model_Equinox',
+        9: 'Model_Explorer',
+        10: 'Model_F-150',
+        11: 'Model_Fusion',
+        12: 'Model_GLC',
+        13: 'Model_Impala',
+        14: 'Model_Malibu',
+        15: 'Model_Mustang',
+        16: 'Model_Prius',
+        17: 'Model_Q5',
+        18: 'Model_Q7',
+        19: 'Model_RAV4',
+        20: 'Model_S-Class',
+        21: 'Model_Silverado',
+        22: 'Model_X3',
+        23: 'Model_X5'
+    }
+
+    transmission_mapping = {
+        1: 'Transmission_Manual',
+        2: 'Transmission_Automatic'  # Assuming other options
+    }
+
+    fuel_mapping = {
+        1: 'Fuel_type_Electric',
+        2: 'Fuel_type_Gasoline',
+        3: 'Fuel_type_Hybrid',
+        4: 'Fuel_type_Plug-in Hybrid'
+    }
+
+    body_style_mapping = {
+        1: 'Body_style_Coupe',
+        2: 'Body_style_Hatchback',
+        3: 'Body_style_SUV',
+        4: 'Body_style_Sedan',
+        5: 'Body_style_Truck',
+        6: 'Body_style_Van',
+        7: 'Body_style_Wagon'
+    }
+
+    color_mapping = {
+        1: 'Color_black',
+        2: 'Color_blue',
+        3: 'Color_red',
+        4: 'Color_silver',
+        5: 'Color_white'
+    }
+
+    option_mapping = {
+        1: 'Options_Base',
+        2: 'Options_Full',
+        3: 'Options_Luxe'
+    }
+
+    damage_mapping = {
+        1: 'Damage_Medium',
+        2: 'Damage_Total',
+        3: 'Damage_None' 
+    }
+
 
     # Update one-hot encoded fields based on input IDs
     transformed_features[make_mapping.get(data.makeId, '')] = 1
