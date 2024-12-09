@@ -80,6 +80,10 @@ body {
     justify-content: space-evenly;
 }
 
+.justify-end {
+    justify-content: space-between
+}
+
 .column-flex {
     display: flex;
     flex-direction: column;
@@ -143,8 +147,13 @@ select {
 
 input {
     border: none;
-    width: 100px;
+    width: 200px;
     background-color: #F6FCDF;
     padding: 5px;
     box-sizing: border-box;
+    margin-right: 20px;
+    width: 200px;
+    height: 50px;
+    padding-left: 10px;
+    padding-right: 10px;
 }

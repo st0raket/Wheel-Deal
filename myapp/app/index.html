@@ -22,7 +22,7 @@
                 <div class="row-flex justify-even margin-small">
                     <div class="column-flex">
                         <label for="make-select">Make</label>
-                        <select id="make-select">
+                        <select id="make-select" onchange="handleMakeSelectChage()">
                             <option>Choose</option>
                         </select>
                     </div>
@@ -38,9 +38,12 @@
                 <div class="row-flex justify-even margin-small">
                     <input type="text" placeholder="Year" id="year-input" oninput="clearInvalid()">
                     <input type="text" placeholder="Mileage" id="mileage-input" oninput="clearInvalid()">
-                    <input type="text" placeholder="Horsepower" id="horsepower-input" oninput="clearInvalid()">
                 </div>
 
+                <div class="row-flex justify-even margin-small">
+                    <input type="text" placeholder="Horsepower" id="horsepower-input" oninput="clearInvalid()">
+                    <input type="text" placeholder="Number of Previous Owners" id="num-prev-owners" oninput="clearInvalid()">
+                </div>
                 <div class="row-flex justify-even margin-small">
                     <div class="column-flex">
                         <label for="transmission-select">Transmission</label>
@@ -98,20 +101,21 @@
             <h1 id="no-results-title">Here is where your results will appear</h1>
             <div id="results" class="hidden column-flex">
                 <h1 id="results-title">Estimated retail price</h1>
-                <h1 id="results-predicted-price">1000 $</h1>
+                <h1>$<span id="results-predicted-price"></span></h1>
 
-                <h3 class="results-detail-row">Make: <span id="results-car-make">Ford</span></h3>
-                <h3 class="results-detail-row">Model: <span id="results-car-model">Focus</span></h3>
-                <h3 class="results-detail-row">Year: <span id="results-car-year">2016</span></h3>
-                <h3 class="results-detail-row">Mileage: <span id="results-car-mileage">20000</span></h3>
-                <h3 class="results-detail-row">Horsepower: <span id="results-car-horsepower">240</span></h3>
-                <h3 class="results-detail-row">Fuel Type: <span id="results-car-fueltype">240</span></h3>
-                <h3 class="results-detail-row">Body Style: <span id="results-car-bodystyle">240</span></h3>
-                <h3 class="results-detail-row">Color: <span id="results-car-color">240</span></h3>
-                <h3 class="results-detail-row">Options: <span id="results-car-options">240</span></h3>
-                <h3 class="results-detail-row">Damage Level: <span id="results-car-damagelevel">240</span></h3>
+                <h3 class="results-detail-row">Make: <span id="results-car-make"></span></h3>
+                <h3 class="results-detail-row">Model: <span id="results-car-model"></span></h3>
+                <h3 class="results-detail-row">Year: <span id="results-car-year"></span></h3>
+                <h3 class="results-detail-row">Mileage: <span id="results-car-mileage"></span></h3>
+                <h3 class="results-detail-row">Horsepower: <span id="results-car-horsepower"></span></h3>
+                <h3 class="results-detail-row">Previous Owners: <span id="results-car-prevowners"></span></h3>
+                <h3 class="results-detail-row">Fuel Type: <span id="results-car-fueltype"></span></h3>
+                <h3 class="results-detail-row">Body Style: <span id="results-car-bodystyle"></span></h3>
+                <h3 class="results-detail-row">Color: <span id="results-car-color"></span></h3>
+                <h3 class="results-detail-row">Options: <span id="results-car-options"></span></h3>
+                <h3 class="results-detail-row">Damage Level: <span id="results-car-damagelevel"></span></h3>
 
-                <h2>Estimated Resale Time: <span id="results-predicted-time">9 days</span></h2>
+                <h2>Estimated Resale Time: <span id="results-predicted-time"></span> days</h2>
             </div>
         </div>
     </div>
