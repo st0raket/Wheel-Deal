@@ -53,7 +53,7 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
-    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; uvicorn main:app --host 0.0.0.0'
+    command: bash -c 'pip install -r /api/requirements.txt && while !</dev/tcp/db/5432; do sleep 1; done; uvicorn main:app --host 0.0.0.0'
     volumes:
       - ./api:/api
       - ./model:/model

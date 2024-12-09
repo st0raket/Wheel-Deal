@@ -1,27 +1,23 @@
 class PredictionService {
-    constructor() { }
+    constructor() { 
+        this.url = "http://localhost:8008/"
+    }
     
     getPredictionResults = (carProperties) => {
         return new Promise((resolve, reject) => {
-            // insert fetch logic here in milestone 4
-            resolve({
-                make: "Ford",
-                model: "Focus",
-                year: 2016,
-                mileage: 200000,
-                horsepower: 240,
-                fueltype: "Petrol",
-                bodystyle: "Convertible",
-                color: "Blue",
-                options: "BlueTooth Connectivity",
-                damagelevel: "No Damage",
-                price: 5000,
-                time: 10
-            })
+            fetch(this.url + "predict", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(carProperties)
+            }).then(resp => {
+                if(resp.status == "422") return reject("Please fill all the data")
+                else return resp.json()
+            }).then(data => resolve(data)).catch(err => console.err(err))
         })
-    }
-
- 
+    } 
 }
 
 const predictionService = new PredictionService();

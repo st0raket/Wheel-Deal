@@ -9,6 +9,7 @@ const damageSelect = document.getElementById("damage-select");
 const yearInput = document.getElementById("year-input");
 const mileageInput = document.getElementById("mileage-input");
 const horsepowerInput = document.getElementById("horsepower-input");
+const numberOfPreviousOwnersInput = document.getElementById("num-prev-owners")
 
 const carMetricsForm = document.getElementById("car-metrics-form");
 const evaluateButton = document.getElementById("evaluate-button");
@@ -21,6 +22,7 @@ const resultsCarModel = document.getElementById("results-car-model");
 const resultsCarYear = document.getElementById("results-car-year");
 const resultsCarMileage = document.getElementById("results-car-mileage");
 const resultsCarHorsepower = document.getElementById("results-car-horsepower");
+const resultsCarPrevOwners = document.getElementById("results-car-prevowners");
 const resultsCarFueltype = document.getElementById("results-car-fueltype");
 const resultsCarBodystyle = document.getElementById("results-car-bodystyle");
 const resultsCarColor = document.getElementById("results-car-color");
@@ -30,8 +32,7 @@ const resultsCarDamagelevel = document.getElementById("results-car-damagelevel")
 const resultsPredictedPrice = document.getElementById("results-predicted-price");
 const resultsPredictedTime = document.getElementById("results-predicted-time");
 
-const populateSelect = async (select) => {
-    const options = await optionsService.getOptionsBySelectId(select.id);
+const populateSelect = (select, options) => {
     for (let option of options) {
         const optionElement = document.createElement("option");
         optionElement.value = option.id;
@@ -40,14 +41,28 @@ const populateSelect = async (select) => {
     }
 }
 
-populateSelect(makeSelect);
-populateSelect(modelSelect);
-populateSelect(transmissionSelect);
-populateSelect(fueltypeSelect);
-populateSelect(bodyStyleSelect);
-populateSelect(colorSelect);
-populateSelect(optionSelect);
-populateSelect(damageSelect);
+const populateAllPossibleSelects = async () => {
+    const makeOptions = await optionsService.getMakeOptions();
+    populateSelect(makeSelect, makeOptions)
+
+    const transmissionOptions = await optionsService.getTransmissionOptions();
+    populateSelect(transmissionSelect, transmissionOptions)
+
+    const fuelTypeOptions = await optionsService.getFuelTypeOptions();
+    populateSelect(fueltypeSelect, fuelTypeOptions)
+
+    const bodyStyleOptions = await optionsService.getBodyStyleOptions();
+    populateSelect(bodyStyleSelect, bodyStyleOptions)
+
+    const colorOptions = await optionsService.getColorOptions();
+    populateSelect(colorSelect, colorOptions)
+
+    const carOptionOptions = await optionsService.getCarOptionOptions();
+    populateSelect(optionSelect, carOptionOptions)
+
+    const damageOptions = await optionsService.getDamageOptions();
+    populateSelect(damageSelect, damageOptions)
+}
 
 
 const showPredictionResults = (predictionResults) => {
@@ -55,16 +70,21 @@ const showPredictionResults = (predictionResults) => {
     resultsDiv.classList.remove("hidden");
     resultsDiv.classList.add("shown");
 
-    resultsCarMake.innerText = predictionResults.make
-    resultsCarModel.innerText = predictionResults.model
-    resultsCarYear.innerText = predictionResults.year
-    resultsCarMileage.innerText = predictionResults.mileage
-    resultsCarHorsepower.innerText = predictionResults.horsepower
-    resultsCarFueltype.innerText = predictionResults.fueltype
-    resultsCarBodystyle.innerText = predictionResults.bodystyle
-    resultsCarColor.innerText = predictionResults.color
-    resultsCarOptions.innerText = predictionResults.options
-    resultsCarDamagelevel.innerText = predictionResults.damagelevel
+    resultsCarMake.innerText = predictionResults.make;
+    resultsCarModel.innerText = predictionResults.model;
+    resultsCarYear.innerText = predictionResults.year;
+    resultsCarMileage.innerText = predictionResults.mileage;
+    resultsCarHorsepower.innerText = predictionResults.horsepower;
+    resultsCarFueltype.innerText = predictionResults.fueltype;
+    resultsCarBodystyle.innerText = predictionResults.bodyStyle;
+    resultsCarColor.innerText = predictionResults.color;
+    resultsCarOptions.innerText = predictionResults.option;
+    resultsCarDamagelevel.innerText = predictionResults.damage;
+    resultsCarPrevOwners.innerText = predictionResults.numPrevOwners;
+
+    resultsPredictedPrice.innerText = parseInt(predictionResults.price).toLocaleString();
+    resultsPredictedTime.innerText = parseInt(predictionResults.time).toLocaleString();
+
 }
 
 const clearInvalid = () => {
@@ -86,16 +106,42 @@ const collectFormData = () => {
         damageId: damageSelect.value,
         year: yearInput.value,
         mileage: mileageInput.value,
-        horsepower: horsepowerInput.value
+        horsepower: horsepowerInput.value,
+        numPrevOwners: numberOfPreviousOwnersInput.value
     }
 }
 
 evaluateButton.addEventListener("click", async (e) => {
-    const carProperties = collectFormData();
+    try {
+        const carProperties = collectFormData();
+        e.preventDefault();
+        carMetricsForm.reset();
 
-    e.preventDefault();
-    carMetricsForm.reset();
-
-    const predictionResults = await predictionService.getPredictionResults(carProperties);
-    showPredictionResults(predictionResults);
+        const predictionResults = await predictionService.getPredictionResults(carProperties);
+        showPredictionResults(predictionResults);
+    } catch (err) {
+        console.log("error to alert", err)
+        alert(err)
+    }
+   
 })
+
+const handleMakeSelectChage = async () => {
+    keepOnlyDefaulOption(modelSelect);
+
+    makeId = makeSelect.value;
+    const modelOptions = await optionsService.getModelOptions(makeId);
+    populateSelect(modelSelect, modelOptions)
+}
+
+
+const keepOnlyDefaulOption = (selectObject) => {
+    selectObject.innerHTML = "";
+    const defaultOption = document.createElement("option");
+    defaultOption.text = "Choose";
+    defaultOption.value = "Choose"
+    selectObject.append(defaultOption)
+}
+
+
+populateAllPossibleSelects()

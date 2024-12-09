@@ -1,6 +1,6 @@
 class OptionsService {
     constructor() {
-        this.url = "url"
+        this.url = "http://localhost:8008/"
          
         this.makeOptions = makeOptions;
         this.modelOptions = modelOptions;
@@ -13,30 +13,87 @@ class OptionsService {
 
     }
 
-
-    getOptionsBySelectId = (selectId) => {
-        // insert prediction logic here in milestone 4
+    getMakeOptions = () => {
         return new Promise((resolve, reject) => {
-            switch (selectId) {
-                case "make-select":
-                    resolve(this.makeOptions)
-                case "model-select":
-                    resolve(this.modelOptions)
-                case "transmission-select":
-                    resolve(this.transmissionOptions)
-                case "fueltype-select":
-                    resolve(this.fuelTypeOptions)
-                case "bodystyle-select":
-                    resolve(this.bodyStyleOptions)
-                case "color-select":
-                    resolve(this.colorOptions)
-                case "option-select":
-                    resolve(this.carOptionOptions)
-                case "damage-select":
-                    resolve(this.damageOptions)
-            }
+            fetch(this.url + "make-options").then(resp => resp.json()).then(data => {
+                resolve(data)
+            }).catch(err => {
+                reject(err)
+            })
         })
     }
+
+    getTransmissionOptions = () => {
+        return new Promise((resolve, reject) => {
+            fetch(this.url + "transmission-options").then(resp => resp.json()).then(data => {
+                resolve(data)
+            }).catch(err => {
+                reject(err)
+            })
+        })
+    }
+
+    getFuelTypeOptions = () => {
+        return new Promise((resolve, reject) => {
+            fetch(this.url + "fuel-type-options").then(resp => resp.json()).then(data => {
+                resolve(data)
+            }).catch(err => {
+                reject(err)
+            })
+        })
+    }
+
+    getBodyStyleOptions = () => {
+        return new Promise((resolve, reject) => {
+            fetch(this.url + "body-style-options").then(resp => resp.json()).then(data => {
+                resolve(data)
+            }).catch(err => {
+                reject(err)
+            })
+        })
+    }
+
+    getColorOptions = () => {
+        return new Promise((resolve, reject) => {
+            fetch(this.url + "color-options").then(resp => resp.json()).then(data => {
+                resolve(data)
+            }).catch(err => {
+                reject(err)
+            })
+        })
+    }
+
+    getCarOptionOptions = () => {
+        return new Promise((resolve, reject) => {
+            fetch(this.url + "car-option-options").then(resp => resp.json()).then(data => {
+                resolve(data)
+            }).catch(err => {
+                reject(err)
+            })
+        })
+    }
+
+    getDamageOptions = () => {
+        return new Promise((resolve, reject) => {
+            fetch(this.url + "damage-options").then(resp => resp.json()).then(data => {
+                resolve(data)
+            }).catch(err => {
+                reject(err)
+            })
+        })
+    }
+
+    getModelOptions = (makeId) => {
+        return new Promise((resolve, reject) => {
+            fetch(this.url + "model-options/" + makeId).then(resp => resp.json()).then(data => {
+                resolve(data)
+            }).catch(err => {
+                reject(err)
+            })
+        })
+    }
+
+
 }
 
 const optionsService = new OptionsService()

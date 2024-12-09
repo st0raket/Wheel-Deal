@@ -6,12 +6,22 @@ from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 import pickle
 import os
 import numpy as np
 
+
 # Initialize FastAPI app
 app = FastAPI()
+
+app.add_middleware(
+  CORSMiddleware,
+  allow_origins = ["*"],
+  allow_methods = ["*"],
+  allow_headers = ["*"]
+)
+
 
 def get_name_from_database(db: Session, table, id_value: int):
     """
