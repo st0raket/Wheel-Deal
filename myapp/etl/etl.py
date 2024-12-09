@@ -1,3 +1,22 @@
+"""
+ETL Process for Car Sales Data
+This script defines an ETL process that performs the following steps:
+1. Augments data from a base CSV file into an augmented CSV file.
+2. Populates predefined dimension tables in a database.
+3. Transforms augmented data into a fact table.
+4. Loads the fact table into the database.
+
+Modules and libraries used:
+- pandas: For data manipulation and transformation.
+- sqlalchemy: For ORM and database interactions.
+- psycopg2: For direct database interaction.
+- loguru: For logging.
+- numpy: For handling numerical data efficiently.
+
+Predefined tables:
+- CarMake, Model, FuelType, Color, BodyStyle, Transmission, Option, Damage, Cars.
+"""
+
 import traceback
 import pandas as pd
 from sqlalchemy.orm import Session
@@ -39,11 +58,15 @@ DAMAGES = ["Total", "None", "Low", "Medium"]
 def load_to_database(df, table_name, engine):
     """
     Load data into the specified database table using psycopg2's execute_batch.
-    """
-    import psycopg2
-    from psycopg2.extras import execute_batch
-    import numpy as np
 
+    Parameters:
+    - df (pd.DataFrame): The DataFrame containing data to load.
+    - table_name (str): The name of the database table to load data into.
+    - engine (sqlalchemy.Engine): The database engine for connection.
+
+    Returns:
+    - None
+    """
     try:
         conn_params = {
             "dbname": "cars",
@@ -95,10 +118,17 @@ def load_to_database(df, table_name, engine):
         if conn:
             conn.close()
 
-
-
 # Function to populate predefined dimension tables
 def populate_predefined_dimension_tables(session):
+    """
+    Populate predefined dimension tables with hardcoded values.
+
+    Parameters:
+    - session (sqlalchemy.orm.Session): SQLAlchemy session for database operations.
+
+    Returns:
+    - None
+    """
     logger.info("Populating predefined dimension tables")
     try:
         # Populate car makes and models
@@ -155,14 +185,35 @@ def populate_predefined_dimension_tables(session):
 
 # Function to fetch mappings from dimensional tables
 def get_mapping(session, model, column_name):
+    """
+    Fetch mappings of values to IDs from a database table.
+
+    Parameters:
+    - session (sqlalchemy.orm.Session): SQLAlchemy session for database operations.
+    - model (Base): SQLAlchemy ORM model class.
+    - column_name (str): Column name for which mappings are required.
+
+    Returns:
+    - dict: A dictionary mapping column values to their corresponding IDs.
+    """
     records = session.query(model).all()
     return {getattr(record, column_name): record.ID for record in records}
 
 # Function to transform augmented data into a fact table
 def transform_to_fact_table(augmented_csv_path, fact_csv_path, session):
+    """
+    Transform augmented data into a format suitable for a fact table.
+
+    Parameters:
+    - augmented_csv_path (str): Path to the augmented CSV file.
+    - fact_csv_path (str): Path to save the transformed fact table CSV.
+    - session (sqlalchemy.orm.Session): SQLAlchemy session for database operations.
+
+    Returns:
+    - None
+    """
     logger.info("Loading augmented CSV")
     df = pd.read_csv(augmented_csv_path)
-    
 
     logger.info("Fetching mappings for categorical variables")
     mappings = {
@@ -201,6 +252,16 @@ def transform_to_fact_table(augmented_csv_path, fact_csv_path, session):
 
 # Full ETL Process
 def etl_process():
+    """
+    Execute the full ETL process:
+    1. Augment data from the base CSV file.
+    2. Populate dimension tables in the database.
+    3. Transform the augmented data into a fact table.
+    4. Load the fact table into the database.
+
+    Returns:
+    - None
+    """
     session = SessionLocal()
     try:
         logger.info("Starting data augmentation")
