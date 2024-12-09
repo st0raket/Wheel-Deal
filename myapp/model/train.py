@@ -1,3 +1,26 @@
+"""
+Car Sales Prediction Script
+This script predicts two key metrics:
+1. Estimated Price of a car based on various features using ElasticNet regression.
+2. Days required to sell a car based on features and predicted price using CatBoost regression.
+
+Workflow:
+1. Data preprocessing: Load data, convert date columns, create time-related features, and perform log transformation.
+2. Feature engineering: One-hot encoding of categorical variables and creation of dummy variables.
+3. Model training and evaluation:
+   - ElasticNet for price prediction.
+   - CatBoost for days-to-sell prediction.
+4. Model saving: Save trained models for future use.
+
+Modules and Libraries:
+- pandas, numpy: For data manipulation and transformations.
+- scikit-learn: For model training, evaluation, and splitting data.
+- catboost: For training the regression model for days-to-sell prediction.
+- pickle: For saving trained models to disk.
+- dotenv: For loading environment variables.
+- sqlalchemy: For database connection and data retrieval.
+"""
+
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -19,12 +42,12 @@ import pickle
 # DB_PORT = os.getenv("DB_PORT", "5432")
 # DB_NAME = os.getenv("DB_NAME") 
 
-
 # engine = create_engine(f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}')
 
 # query = "SELECT * FROM car_sales_data;"  # Replace with your table name
 #data = pd.read_sql(query, con=engine)
 data = pd.read_csv("car_sales_augmented.csv")
+
 # Convert dates and create time-related features
 data['Website_post_date'] = pd.to_datetime(data['Website_post_date'], format='%d.%m.%y', errors='coerce')
 data['Sell_date'] = pd.to_datetime(data['Sell_date'], format='%d.%m.%y', errors='coerce')
@@ -44,8 +67,22 @@ X_price = data_dummified[price_features_dummified]
 y_price = data_dummified['Log_Estimated_price']
 X_price_train, X_price_test, y_price_train, y_price_test = train_test_split(X_price, y_price, test_size=0.2, random_state=42)
 
-# Function to evaluate model
 def train_and_evaluate_model(regressor, X_train, y_train, X_test, y_test):
+    """
+    Train a regression model and evaluate its performance.
+
+    Parameters:
+    - regressor: A regression model instance.
+    - X_train (pd.DataFrame): Training feature set.
+    - y_train (pd.Series): Training target variable.
+    - X_test (pd.DataFrame): Testing feature set.
+    - y_test (pd.Series): Testing target variable.
+
+    Returns:
+    - regressor: Trained regression model.
+    - dict: Model performance metrics (MAE, MSE, R2).
+    - np.array: Predictions on the test set.
+    """
     regressor.fit(X_train, y_train)
     predictions = regressor.predict(X_test)
     mae = mean_absolute_error(y_test, predictions)
