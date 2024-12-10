@@ -2,6 +2,8 @@
 
 This document provides an overview of the available API endpoints for the Wheel-Deal service, which estimates car sale prices and provides related functionality.
 
+---
+
 ## Endpoints
 
 ### 1. `GET /make-options`
@@ -12,96 +14,92 @@ Retrieve a list of car makes available in the system.
 - **200 OK**: A list of car makes.
 
 #### Example Response:
-A list of available car makes like BMW, Chevrolet, and Ford.
-
----
+```json
+[
+    {"id": 1, "name": "BMW"},
+    {"id": 2, "name": "Chevrolet"},
+    {"id": 3, "name": "Ford"}
+]
+```
 
 ### 2. `GET /model-options/{makeId}`
 #### Description:
 Retrieve a list of car models for a specific car make.
 
 #### Parameters:
-- `makeId`: The ID of the car make (e.g., `1` for BMW).
+- `makeId` (path parameter): The ID of the car make (e.g., `1` for BMW).
 
-#### Response:
-- **200 OK**: A list of models for the specified make.
-
----
-
+#### Example Request:
+```http
+GET /model-options/1
+```
+#### Example Response:
+```json
+[
+    {"id": 1, "name": "3 Series"},
+    {"id": 2, "name": "5 Series"}
+]
+```
 ### 3. `GET /color-options`
 #### Description:
 Retrieve a list of available car colors.
 
 #### Response:
-- **200 OK**: A list of car colors such as Black, White, and Red.
-
----
-
-### 4. `POST /predict-price`
-#### Description:
-Predict the sale price of a car based on various features provided by the user.
-
-#### Request Body:
-- `make_id`: The ID of the car make.
-- `model_id`: The ID of the car model.
-- `year`: The year the car was manufactured.
-- `mileage`: The mileage of the car in kilometers.
-- `color_id`: The ID of the car color.
-- `condition`: The condition of the car (e.g., "good", "fair").
-- `location`: The location where the car is being sold.
-
-#### Response:
-- **200 OK**: The predicted price of the car.
-
----
-
-### 5. `POST /predict-days-to-sell`
-#### Description:
-Predict how many days it will take to sell a car based on various features.
-
-#### Request Body:
-- `make_id`: The ID of the car make.
-- `model_id`: The ID of the car model.
-- `year`: The year the car was manufactured.
-- `mileage`: The mileage of the car in kilometers.
-- `color_id`: The ID of the car color.
-- `condition`: The condition of the car (e.g., "good", "fair").
-- `location`: The location where the car is being sold.
-
-#### Response:
-- **200 OK**: The predicted number of days it will take to sell the car.
-
----
-
-### 6. `GET /feature-options`
-#### Description:
-Retrieve available options for different car features such as transmission type and fuel type.
-
-#### Response:
-- **200 OK**: A list of feature options (e.g., transmission, fuel type).
-
----
-
-## Error Responses
-
-### 1. **400 Bad Request**
-Occurs if the client sends invalid or incomplete data in the request.
+- **200 OK**: A list of car colors.
 
 #### Example Response:
-A response indicating that the input data is invalid or missing.
+```json
+[
+    {"id": 1, "name": "Black"},
+    {"id": 2, "name": "White"},
+    {"id": 3, "name": "Red"}
+]
+```
 
-### 2. **404 Not Found**
-Occurs if a requested resource (e.g., car make, model, or color) is not found.
+### 4. `POST /predict`
+#### Description:
+Predict the sale price and the estimated time to sell a car based on various features provided by the user.
 
-#### Example Response:
-A response indicating that the resource was not found.
+#### Request Body:
+- **makeId** (int): ID of the car make (e.g., 1 for BMW).
+- **modelId** (int): ID of the car model (e.g., 1 for 5 Series).
+- **transmissionId** (int): ID of the car's transmission type.
+- **fueltypeId** (int): ID of the car's fuel type.
+- **bodyStyleId** (int): ID of the car's body style.
+- **colorId** (int): ID of the car's color.
+- **optionId** (int): ID of the car's additional options.
+- **damageId** (int): ID representing the car's damage level.
+- **year** (int): The year the car was manufactured.  
+  **Validation**: Must be between 1886 and 2024 (inclusive).
+- **mileage** (int): The car's mileage in kilometers.  
+  **Validation**: Must be a positive integer up to 1,000,000.
+- **horsepower** (int): The horsepower of the car.  
+  **Validation**: Must be between 0 and 2000.
+- **numPrevOwners** (int): Number of previous owners of the car.  
+  **Validation**: Must be between 0 and 20.
 
----
 
-## Authentication
+#### Response:
+- **200 OK**: The predicted price and related car details.
 
-If your API requires authentication (e.g., API tokens or OAuth), include details about the authentication methods and how to obtain credentials.
 
-## Rate Limits
 
-If applicable, describe any rate limits for your API (e.g., number of requests per minute/hour).
+#### Example Response::
+```json
+{
+    "price": 25000.0,
+    "time": 15.0,
+    "make": "BMW",
+    "model": "5 Series",
+    "transmission": "Automatic",
+    "fueltype": "Gasoline",
+    "bodyStyle": "Sedan",
+    "color": "Black",
+    "option": "Sunroof",
+    "damage": "None",
+    "year": 2020,
+    "mileage": 30000,
+    "horsepower": 150,
+    "numPrevOwners": 1
+}
+```
