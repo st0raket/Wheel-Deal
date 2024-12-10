@@ -40,6 +40,7 @@ GET /model-options/1
     {"id": 2, "name": "5 Series"}
 ]
 ```
+
 ### 3. `GET /color-options`
 #### Description:
 Retrieve a list of available car colors.
@@ -53,6 +54,85 @@ Retrieve a list of available car colors.
     {"id": 1, "name": "Black"},
     {"id": 2, "name": "White"},
     {"id": 3, "name": "Red"}
+]
+```
+
+### 4. `GET /fuel-type-options`
+#### Description:
+Retrieve a list of available fuel types.
+
+#### Response:
+- **200 OK**: A list of fuel types.
+
+#### Example Response:
+```json
+[
+    {"id": 1, "name": "Electric"},
+    {"id": 2, "name": "Gasoline"},
+    {"id": 3, "name": "Hybrid"}
+]
+```
+
+### 5. `GET /body-style-options`
+#### Description:
+Retrieve a list of available car body styles.
+
+#### Response:
+- **200 OK**: A list of car body styles.
+
+#### Example Response:
+```json
+[
+    {"id": 1, "name": "Sedan"},
+    {"id": 2, "name": "SUV"},
+    {"id": 3, "name": "Coupe"}
+]
+```
+
+### 6. `GET /transmission-options`
+#### Description:
+Retrieve a list of available transmission types.
+
+#### Response:
+- **200 OK**: A list of transmission types.
+
+#### Example Response:
+```json
+[
+    {"id": 1, "name": "Manual"},
+    {"id": 2, "name": "Automatic"}
+]
+```
+
+### 7. `GET /car-option-options`
+#### Description:
+Retrieve a list of available car options.
+
+#### Response:
+- **200 OK**: A list of car options.
+
+#### Example Response:
+```json
+[
+    {"id": 1, "name": "Base"},
+    {"id": 2, "name": "Full"},
+    {"id": 3, "name": "Luxe"}
+]
+```
+
+### 8. `GET /damage-options`
+#### Description:
+Retrieve a list of available damage levels for cars.
+
+#### Response:
+- **200 OK**: A list of damage levels.
+
+#### Example Response:
+```json
+[
+    {"id": 1, "name": "None"},
+    {"id": 2, "name": "Medium"},
+    {"id": 3, "name": "Total"}
 ]
 ```
 
