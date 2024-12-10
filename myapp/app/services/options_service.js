@@ -1,16 +1,6 @@
 class OptionsService {
     constructor() {
         this.url = "http://localhost:8008/"
-         
-        this.makeOptions = makeOptions;
-        this.modelOptions = modelOptions;
-        this.transmissionOptions = transmissionOptions;
-        this.fuelTypeOptions = fuelTypeOptions
-        this.bodyStyleOptions = bodyStyleOptions
-        this.colorOptions = colorOptions
-        this.carOptionOptions = carOptionOptions
-        this.damageOptions = damageOptions
-
     }
 
     getMakeOptions = () => {
@@ -92,8 +82,6 @@ class OptionsService {
             })
         })
     }
-
-
 }
 
 const optionsService = new OptionsService()
