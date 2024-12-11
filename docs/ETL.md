@@ -1,7 +1,7 @@
 # ETL Service Documentation
 
-## Overview
-This ETL (Extract, Transform, Load) service is designed to manage the pipeline for handling car sales data. It performs the following operations:
+## ETL Workflow
+This ETL (Extract, Transform, Load) service is designed to manage the pipeline for handling car sales data. It performs the following operations. The `etl_process` function orchestrates the entire ETL workflow:
 
 1. **Data Augmentation:** Enhances the base CSV data with simulated data to expand the dataset.
 
@@ -14,76 +14,73 @@ This ETL (Extract, Transform, Load) service is designed to manage the pipeline f
 ---
 
 ## Features
+
 ### Data Augmentation
-The `augment_data` function in the `data_simulation` module expands the base dataset located at `./Database/csv/Wheel Data Final.csv`. The augmented dataset is saved as `./Database/csv/car_sales_augmented.csv`.
+As our product is related to car sales, we wanted to have a relatively realistic dataset (e.g., car models correspond to their respective makes). That’s why we asked ChatGPT to generate a relatively meaningful dataset and then generated additional columns on top of it. 
+
+While we could have used ChatGPT to generate the entire dataset, we opted to generate data ourselves to enhance our skills, despite the additional complexity of training the model on that data.
+
+The `augment_data` function in the `data_simulation` module expands the base dataset located at `./Database/csv/Wheel Data Final.csv`. 
+
+#### Base Dataset (Wheel Data Final.csv)
+The base dataset includes the following columns:
+- `Car_make`
+- `Model`
+- `Milage`
+- `Transmission`
+- `Year`
+- `Website_post_date`
+- `Sell_date`
+- `Options`
+- `Horsepower`
+
+#### Generated Columns
+The `augment_data` function generates the following additional columns:
+- `Color`
+- `Damage`
+- `Body_style`
+- `Fuel_type`
+- `Num_of_prev_owners`
+- `Estimated_price`
+
+The augmented dataset is saved as `./Database/csv/car_sales_augmented.csv`.
+
+---
 
 ### Predefined Dimension Table Population
-Populates the following dimension tables with predefined values:
+The `populate_predefined_dimension_tables` function populates the following dimension tables with predefined values. These tables are saved to the database using the `load_to_database` function:
 
 - **CarMake**: Includes car brands like Audi, BMW, Toyota, etc.
-
 - **Model**: Lists specific models associated with car makes.
-
 - **FuelType**: Captures types of fuel like Gasoline, Diesel, Electric, etc.
-
-- **Color**: Lists car colors such as black, white, silver, etc.
-
+- **Color**: Lists car colors such as Black, White, Silver, etc.
 - **BodyStyle**: Includes styles like Sedan, SUV, Hatchback, etc.
-
 - **Transmission**: Captures transmission types such as Automatic and Manual.
-
 - **Option**: Lists option packages like Base, Advanced, Luxe, etc.
-
 - **Damage**: Categorizes damage levels such as None, Low, Medium, Total.
 
-Dimension tables are populated using SQLAlchemy models, handling potential integrity errors for duplicate entries.
+---
 
 ### Data Transformation
-Transforms the augmented dataset to a fact table format. The steps include:
+The transformation process includes the following steps:
 
-1. Mapping categorical values (e.g., CarMake, Model) to their respective IDs using dimension tables.
-2. Selecting relevant columns for the fact table, including attributes like mileage, year, horsepower, and estimated price.
-3. Saving the transformed data to `./Database/csv/car_sales_fact.csv`.
+1. **Mapping Categorical Values:** Maps categorical values (e.g., `CarMake`, `Model`) to their respective IDs using dimension tables via the `get_mapping` function.
+2. **Fact Table Creation:** The `transform_to_fact_table` function uses the augmented dataset and the mapped categorical variables to create the fact table.
+3. **Saving Transformed Data:** The transformed data is saved as `./Database/csv/car_sales_fact.csv`.
+
+---
 
 ### Data Loading
 The `load_to_database` function uses PostgreSQL and `psycopg2` to efficiently insert the transformed fact table into the database. Key features include:
 
-- Batch insertion for optimized performance.
-- Data type validation to handle numeric, string, and datetime fields.
+- **Batch Insertion:** Optimizes performance by inserting data in batches.
+- **Data Type Validation:** Ensures numeric, string, and datetime fields are correctly handled.
 
 ---
 
-## ETL Workflow
-### Full Process
-The `etl_process` function orchestrates the entire ETL workflow:
+## Database ERD
+The obtained database has the following Entity-Relationship Diagram (ERD):
 
-1. Augments the base dataset.
-2. Populates dimension tables with predefined data.
-3. Transforms the augmented dataset into a structured fact table.
-4. Loads the fact table into the PostgreSQL database.
-
-### Key Functions
-#### `populate_predefined_dimension_tables(session)`
-Populates dimension tables for categorical variables. Handles duplicates using SQLAlchemy's `IntegrityError`.
-
-#### `transform_to_fact_table(augmented_csv_path, fact_csv_path, session)`
-Transforms augmented data into a fact table format, mapping categorical values to their IDs.
-
-#### `load_to_database(df, table_name, engine)`
-Loads data into the database using batch insertion for efficiency.
+*(Include or reference the ERD image or diagram here)*
 
 ---
-
-## How to Run the ETL Process
-1. Ensure the PostgreSQL database is running and accessible with the following credentials:
-   - **Database Name**: `cars`
-   - **User**: `postgres`
-   - **Password**: `postgrespostgres`
-   - **Host**: `postgresql_db`
-   - **Port**: `5432`
-
-2. Place the base CSV file (`Wheel Data Final.csv`) in the `./Database/csv/` directory.
-
-3. Run the `ETL` process:
-   ```bash
-   python etl_service.py

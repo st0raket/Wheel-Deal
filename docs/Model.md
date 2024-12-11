@@ -1,137 +1,129 @@
-# Model Service Documentation
+# Model Documentation
 
-## Overview
+This documentation provides an overview of the train.py script, which predicts:
+1. The estimated price of a car based on various features using ElasticNet regression.
+2. The days required to sell a car using CatBoost regression.
 
-This service handles the prediction of car prices and the estimated days required to sell a car based on various car attributes. The model uses ElasticNet regression for predicting the car's price and CatBoost regression for estimating the number of days it will take to sell the car.
+## Workflow
+1. Data Preprocessing:
+   - Load data from a CSV file3.
+   - Convert date columns and create time-related features.
+   - Perform log transformation for numerical stability and better model performance.
+2. Feature Engineering:
+   - One-hot encode categorical variables.
+   - Create dummy variables to represent categorical data.
+3. Model Training and Evaluation:
+   - Train an ElasticNet model to predict car prices.
+   - Train a CatBoost regressor to predict days to sell using features and predicted prices.
+4. Model Saving:
+   - Save trained models using pickle for future use.
 
-The model service includes two main components:
+---
 
-- **Price Prediction Model**: Predicts the car's price based on features like make, model, mileage, etc.
-- **Days to Sell Prediction Model**: Predicts the number of days it will take to sell the car.
+## Dependencies
+The following Python libraries are required:
+- pandas
+- numpy
+- scikit-learn
+- catboost
+- dotenv
+- sqlalchemy
+- pickle
 
-Both models are saved as pickle files for reuse after training.
+Install these libraries using:
+pip install pandas numpy scikit-learn catboost python-dotenv sqlalchemy
+...---
 
-## Features
+## Data Preprocessing
 
+### Input Data
+- Columns Required:
+  - Website_post_date: The date the car listing was posted.
+  - Sell_date: The date the car was sold.
+  - Estimated_price: The price of the car.
+  - Categorical features: Car_make, Model, Transmission, Options, Color, Damage, Body_style, Fuel_type.
 
- **Price Prediction Model**
+### Steps:
+1. Date Conversion: Convert Website_post_date and Sell_date to datetime format.
+2. Feature Creation: Compute Days_to_sell as the difference between Sell_date and Website_post_date.
+3. Log Transformation: Apply log transformation to Estimated_price for numerical stability.
+4. One-Hot Encoding: Transform categorical features into dummy variables using pd.get_dummies.
 
-   - **Description**: Predicts the price of a car based on various features.
-   - **Algorithm**: ElasticNet regression.
-   - **Inputs**: Car attributes like make, model, mileage, fuel type, etc.
-   - **Outputs**: Predicted car price.
-
- **Days to Sell Prediction Model**
- 
-   - **Description**: Predicts the number of days it will take to sell a car based on features.
-   - **Algorithm**: CatBoost regression.
-   - **Inputs**: Car features and predicted price.
-   - **Outputs**: Predicted days to sell the car.
+---
 
 ## Models
 
-### 1. **Price Prediction Model (ElasticNet)**
+### 1. Price Prediction Model (ElasticNet)
 
-This model predicts the car's price based on input features using the ElasticNet regression algorithm.
+#### Description
+Predicts the car's price based on input features using the ElasticNet regression algorithm.
 
-#### Methods:
-- **trainPriceModel(carData)**
-    - **Description**: Trains the price prediction model using historical car sales data.
-    - **Parameters**: `carData` (DataFrame containing car features and prices).
-    - **Returns**: The trained model and performance metrics (MAE, MSE, R2).
-    - **Example Usage**:
-        ```javascript
-        const trainedPriceModel = trainPriceModel(carData);
-        ```
+#### Features
+- Car attributes such as make, model, mileage, fuel type, etc.
 
-### 2. **Days to Sell Prediction Model (CatBoost)**
+#### Methods
+- train_and_evaluate_model(regressor, X_train, y_train, X_test, y_test):
+  - Trains a regression model and evaluates its performance.
+  - Parameters: 
+    - regressor: Regression model instance.
+    - X_train: Training feature set.
+    - y_train: Training target variable.
+    - X_test: Testing feature set.
+    - y_test: Testing target variable.
+  - Returns: The trained model, performance metrics (MAE, MSE, R2), and predictions.
 
-This model predicts the number of days it will take to sell a car based on input features and predicted price.
+---
 
-#### Methods:
-- **trainSellTimeModel(carData, pricePredictions)**
-    - **Description**: Trains the sell time prediction model based on car features and predicted prices.
-    - **Parameters**: 
-        - `carData` (DataFrame containing car features).
-        - `pricePredictions` (Array of predicted car prices from the price model).
-    - **Returns**: The trained model and performance metrics (MAE, MSE, R2).
-    - **Example Usage**:
-        ```javascript
-        const trainedSellTimeModel = trainSellTimeModel(carData, pricePredictions);
-        ```
+### 2. Days to Sell Prediction Model (CatBoost)
 
-### 3. **Prediction Service**
+#### Description
+Predicts the number of days it will take to sell a car based on input features and predicted price.
 
-The `PredictionService` uses the trained models to make predictions based on user-provided car properties.
+#### Features
+- Car attributes and the predicted price from the price prediction model.
 
-#### Methods:
+#### Methods
+- train_and_evaluate_model(regressor, X_train, y_train, X_test, y_test):
+  - Trains a regression model and evaluates its performance (used for CatBoost).
+  - Parameters: 
+    - regressor: Regression model instance.
+    - X_train: Training feature set.
+    - y_train: Training target variable.
+    - X_test: Testing feature set.
+    - y_test: Testing target variable.
+  - Returns: The trained model, performance metrics (MAE, MSE, R2), and predictions.
 
-- **getPredictionResults(carProperties)**
-    - **Description**: Predicts car price and days to sell based on the provided car properties.
-    - **Parameters**: 
-        - `carProperties`: An object containing car features like make, model, mileage, etc.
-    - **Returns**: A Promise that resolves to an object with predicted car details (price and days to sell).
-    - **Example Usage**:
-        ```javascript
-        const predictionService = new PredictionService();
-        predictionService.getPredictionResults(carProperties)
-            .then(predictionResults => {
-                console.log(predictionResults);
-            });
-        ```
+---
 
-    - **Example Response**:
-    ```javascript
-    {
-        price: 10000,
-        daysToSell: 14
-    }
-    ```
+## Prediction Workflow
 
-## Options Service
+1. Train the ElasticNet model using the historical data (train_and_evaluate_model function).
+   - Use the resulting predicted prices as input for the CatBoost model.
+2. Train the CatBoost model using the features and predicted prices from the ElasticNet model.
 
-The `OptionsService` provides available options for car attributes such as make, model, transmission, and more. These options are used to populate dropdowns in the UI.
+---
 
-### Methods:
+## Script Execution
 
-- **getOptionsBySelectId(selectId)**
-    - **Description**: Fetches the available options for a specific car attribute based on the `selectId`.
-    - **Parameters**:
-        - `selectId`: The ID of the select input for which options need to be fetched.
-    - **Returns**: A Promise that resolves to a list of options.
-    - **Example Usage**:
-        ```javascript
-        const optionsService = new OptionsService();
-        optionsService.getOptionsBySelectId("make-select")
-            .then(options => {
-                console.log(options);
-            });
-        ```
+### train.py
 
-    - **Example Response**:
-    ```javascript
-    [
-        { id: 1, name: "Ford" },
-        { id: 2, name: "Toyota" },
-        { id: 3, name: "BMW" }
-    ]
-    ```
+The script responsible for training the models.
 
-## Main Interface
+#### Steps:
+1. Load and preprocess the data.
+2. Train the ElasticNet model for price prediction using the train_and_evaluate_model function.
+3. Use predicted prices to train the CatBoost model for days-to-sell prediction using train_and_evaluate_model.
+4. Save both models as .pkl files for future use.
 
-### index.js
+#### Running the Script
+Ensure all dependencies are installed and input data is available. Then execute:
+python train.py
+...---
 
-The `index.js` file handles user interactions, collecting form data, calling the prediction service, and displaying the results.
+## Model Saving
+The trained models are saved as .pkl files for reuse:
+1. ElasticNet Model: Saved as elastic_net_price_model.pkl.
+2. CatBoost Model: Saved as catboost_sell_time_model.pkl.
 
-#### Key Functions:
-
-1. **populateSelect(selectId, options)**
-    - Populates a dropdown with available options for a specific car attribute.
-
-2. **collectFormData()**
-    - Gathers selected values from the form to be passed to the prediction service.
-
-3. **showPredictionResults(predictionResults)**
-    - Displays the prediction results (price and days to sell).
-
+These files are stored in the ./models/ directory.
 

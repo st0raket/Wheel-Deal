@@ -136,7 +136,7 @@ Retrieve a list of available damage levels for cars.
 ]
 ```
 
-### 4. `POST /predict`
+### 9. `POST /predict`
 #### Description:
 Predict the sale price and the estimated time to sell a car based on various features provided by the user.
 

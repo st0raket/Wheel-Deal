@@ -1,4 +1,4 @@
-# Wheel Deal
+# Wheel-Deal
 
 ## Marketing analytics project
 
