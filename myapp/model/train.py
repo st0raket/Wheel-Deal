@@ -32,20 +32,6 @@ import sqlalchemy.orm as orm
 from sqlalchemy import create_engine
 import pickle
 
-# Load environment variables from .env file
-# load_dotenv(".env")
-
-# # Get database credentials from environment variables
-# DB_USER = os.getenv("DB_USER")
-# DB_PASSWORD = os.getenv("DB_PASSWORD")
-# DB_HOST = os.getenv("DB_HOST", "postgresql_db")
-# DB_PORT = os.getenv("DB_PORT", "5432")
-# DB_NAME = os.getenv("DB_NAME") 
-
-# engine = create_engine(f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}')
-
-# query = "SELECT * FROM car_sales_data;"  # Replace with your table name
-#data = pd.read_sql(query, con=engine)
 data = pd.read_csv("car_sales_augmented.csv")
 
 # Convert dates and create time-related features
