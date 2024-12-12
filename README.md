@@ -62,7 +62,6 @@ Here’s an overview of the project’s file structure:
 ├── README.md
 ├── feedback.md
 ├── mkdocs.yml
-├── requrenments.txt
 ├── ERD_final.png
 └── myapp/
     ├── api/
@@ -74,18 +73,7 @@ Here’s an overview of the project’s file structure:
     │       ├── database.py
     │       └── models.py
     ├── app/
-    │   ├── fonts/jockey-one/
-    │   │   ├── Jaro/
-    │   │   │   ├── static/
-    │   │   │   │   ├── Jaro-Regular.ttf
-    │   │   │   │   ├── Jaro_24pt-Regular.ttf
-    │   │   │   │   ├── Jaro_36pt-Regular.ttf
-    │   │   │   │   ├── Jaro_60pt-Regular.ttf
-    │   │   │   │   └── Jaro_9pt-Regular.ttf
-    │   │   │   └── Jaro-Regular-VariableFont_opsz.ttf
-    │   │   └── Jockey_One/
-    │   │       ├── JockeyOne-Regular.ttf
-    │   │       └── OFL.txt
+    │   ├── fonts/ 
     │   ├── services/
     │   │   ├── options_services.js
     │   │   └── prediction_service.js
@@ -112,11 +100,6 @@ Here’s an overview of the project’s file structure:
     │   └── requirements.txt
     ├── model/
     │   ├── catboost_info/
-    │   │   ├── learn/
-    │   │   │   └── events.out.tfevents
-    │   │   ├── catboost_training.json
-    │   │   ├── learn_error.tsv
-    │   │   └── time_left.tsv
     │   ├── models/
     │   │   ├── catboost_sell_time_model.pkl
     │   │   └── elastic_net_price_model.pkl
@@ -159,13 +142,13 @@ Before running this setup, ensure Docker and Docker Compose are installed on you
 
 For the purpose of easy management and easy checking, the .env file is pushed to the remote repository.
 
-## ETL Kristina
+## ETL 
 
 ### Schema Design
 
 We will try to create below schema:
 
-![Star Schema](docs/imgs/star_schema.png)
+![Star Schema](./ERD_FINAL.png)
 
 
 
