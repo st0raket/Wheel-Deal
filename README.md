@@ -16,6 +16,8 @@
 2. [Figma UI Prototype](https://www.figma.com/design/SGwS5yc76ng5AtCBYv6GRY/WheelDeal?node-id=0-1&t=H6y0TeJXTYgVBMxp-1)
 3. [Product Roadmap](https://miro.com/app/board/uXjVLNxV--Y=/)
 4. [Product Backlog](https://miro.com/app/board/uXjVLNzQhRQ=/)
+5. [Mkdocs]
+(https://st0raket.github.io/Wheel-Deal)
 
 
 ## Installation
@@ -53,7 +55,7 @@ After running `docker-compose up --build`, you can access each component of the 
 
 ## Project structure
 
-## Project Structure
+
 
 Here’s an overview of the project’s file structure:
 ```bash
@@ -62,7 +64,8 @@ Here’s an overview of the project’s file structure:
 ├── README.md
 ├── feedback.md
 ├── mkdocs.yml
-├── ERD_final.png
+├── ERD_FINAL.png
+├──UI.png
 └── myapp/
     ├── api/
     │   ├── .env
@@ -184,7 +187,7 @@ By running `etl.py` following objects will be created:
 ## Web Application
 
 The web application is done with plain HTML, JS and CSS code, it is hosted on an Nginx server.
-
+![Star Schema](./UI.png)
 
 To Open the web app visit: [here](http://localhost:8080/) 
 
