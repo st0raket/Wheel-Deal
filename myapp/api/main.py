@@ -285,39 +285,30 @@ async def make_prediction(data: PredictionRequest, db: Session = Depends(get_db)
     transformed_features['Horsepower'] = data.horsepower
     transformed_features['Num_of_prev_owners'] = data.numPrevOwners
 
-    # Assign one-hot encoded features using dynamic mappings
-    # Only set features if they exist in the mapping
-    make_feature = make_mapping.get(data.makeId)
-    if make_feature:
-        transformed_features[make_feature] = 1
+    # Assign one-hot encoded features if they exist in the mapping
+    if data.makeId in make_mapping:
+        transformed_features[make_mapping[data.makeId]] = 1
 
-    model_feature = model_mapping.get(data.modelId)
-    if model_feature:
-        transformed_features[model_feature] = 1
+    if data.modelId in model_mapping:
+        transformed_features[model_mapping[data.modelId]] = 1
 
-    transmission_feature = transmission_mapping.get(data.transmissionId)
-    if transmission_feature:
-        transformed_features[transmission_feature] = 1
+    if data.transmissionId in transmission_mapping:
+        transformed_features[transmission_mapping[data.transmissionId]] = 1
 
-    fuel_feature = fuel_mapping.get(data.fueltypeId)
-    if fuel_feature:
-        transformed_features[fuel_feature] = 1
+    if data.fueltypeId in fuel_mapping:
+        transformed_features[fuel_mapping[data.fueltypeId]] = 1
 
-    body_style_feature = body_style_mapping.get(data.bodyStyleId)
-    if body_style_feature:
-        transformed_features[body_style_feature] = 1
+    if data.bodyStyleId in body_style_mapping:
+        transformed_features[body_style_mapping[data.bodyStyleId]] = 1
 
-    color_feature = color_mapping.get(data.colorId)
-    if color_feature:
-        transformed_features[color_feature] = 1
+    if data.colorId in color_mapping:
+        transformed_features[color_mapping[data.colorId]] = 1
 
-    option_feature = option_mapping.get(data.optionId)
-    if option_feature:
-        transformed_features[option_feature] = 1
+    if data.optionId in option_mapping:
+        transformed_features[option_mapping[data.optionId]] = 1
 
-    damage_feature = damage_mapping.get(data.damageId)
-    if damage_feature:
-        transformed_features[damage_feature] = 1
+    if data.damageId in damage_mapping:
+        transformed_features[damage_mapping[data.damageId]] = 1
 
     # Convert transformed features to the input format expected by the model
     try:
@@ -337,17 +328,15 @@ async def make_prediction(data: PredictionRequest, db: Session = Depends(get_db)
     if not sell_time_model:
         raise HTTPException(status_code=500, detail="Days to sell model not loaded")
     try:
-        # Append the log-transformed predicted price as a feature
-        features_for_sell_time = final_features.copy()
-        features_for_sell_time.append(np.log1p(predicted_price))
-        predicted_time = sell_time_model.predict([features_for_sell_time])[0]
+        final_features.append(np.log1p(predicted_price))
+        predicted_time = sell_time_model.predict([final_features])[0]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error predicting days to sell: {str(e)}")
 
     # Return the prediction along with the names of the fields
     return {
-        "price": float(predicted_price),  # Assuming the model outputs the actual price
-        "time": float(predicted_time),
+        "price": np.exp(predicted_price),
+        "time": predicted_time,
         "make": make_name,
         "model": model_name,
         "transmission": transmission_name,
