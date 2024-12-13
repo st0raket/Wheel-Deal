@@ -1,8 +1,8 @@
 import pandas as pd
-from Database.models import CarMake, Model, FuelType, Color,BodyStyle,Transmission, Option, Damage, Cars
+from Database.models import CarMake, Model, FuelType, Color, BodyStyle, Transmission, Option, Damage, Cars
 from Database.database import get_db
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime
 from sqlalchemy.orm import Session
 from fastapi import FastAPI, Depends, HTTPException
@@ -11,17 +11,108 @@ import pickle
 import os
 import numpy as np
 
-
 # Initialize FastAPI app
 app = FastAPI()
 
 app.add_middleware(
-  CORSMiddleware,
-  allow_origins = ["*"],
-  allow_methods = ["*"],
-  allow_headers = ["*"]
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
+# Fixed final_features_template matching the model's expected features
+final_features_template: List[str] = [
+    'Mileage', 'Year', 'Horsepower', 'Num_of_prev_owners',
+    'Car_make_BMW', 'Car_make_Chevrolet', 'Car_make_Ford',
+    'Car_make_Mercedes-Benz', 'Car_make_Toyota',
+    'Model_5 Series', 'Model_A4', 'Model_A6', 'Model_C-Class',
+    'Model_Camry', 'Model_Corolla', 'Model_E-Class',
+    'Model_Equinox', 'Model_Explorer', 'Model_F-150',
+    'Model_Fusion', 'Model_GLC', 'Model_Impala', 'Model_Malibu',
+    'Model_Mustang', 'Model_Prius', 'Model_Q5', 'Model_Q7',
+    'Model_RAV4', 'Model_S-Class', 'Model_Silverado',
+    'Model_X3', 'Model_X5', 'Transmission_Manual',
+    'Options_Base', 'Options_Full', 'Options_Luxe',
+    'Color_black', 'Color_blue', 'Color_red', 'Color_silver',
+    'Color_white', 'Damage_Medium', 'Damage_Total',
+    'Body_style_Coupe', 'Body_style_Hatchback', 'Body_style_SUV',
+    'Body_style_Sedan', 'Body_style_Truck', 'Body_style_Van',
+    'Body_style_Wagon', 'Fuel_type_Electric', 'Fuel_type_Gasoline',
+    'Fuel_type_Hybrid', 'Fuel_type_Plug-in Hybrid'
+]
+
+# Global mapping dictionaries
+make_mapping: Dict[int, str] = {}
+model_mapping: Dict[int, str] = {}
+transmission_mapping: Dict[int, str] = {}
+fuel_mapping: Dict[int, str] = {}
+body_style_mapping: Dict[int, str] = {}
+color_mapping: Dict[int, str] = {}
+option_mapping: Dict[int, str] = {}
+damage_mapping: Dict[int, str] = {}
+
+# Numerical features (fixed)
+numerical_features = ['Mileage', 'Year', 'Horsepower', 'Num_of_prev_owners']
+
+# Function to initialize mappings based on the fixed final_features_template
+def initialize_mappings(db: Session):
+    global make_mapping, model_mapping, transmission_mapping, fuel_mapping
+    global body_style_mapping, color_mapping, option_mapping, damage_mapping
+
+    # Car Makes
+    makes = db.query(CarMake).all()
+    make_mapping = {make.ID: f"Car_make_{make.car_make.replace(' ', '_')}" 
+                   for make in makes 
+                   if f"Car_make_{make.car_make.replace(' ', '_')}" in final_features_template}
+
+    # Models
+    models = db.query(Model).all()
+    model_mapping = {model.ID: f"Model_{model.model.replace(' ', '_')}" 
+                    for model in models 
+                    if f"Model_{model.model.replace(' ', '_')}" in final_features_template}
+
+    # Transmissions
+    transmissions = db.query(Transmission).all()
+    transmission_mapping = {trans.ID: f"Transmission_{trans.transmission.replace(' ', '_')}" 
+                            for trans in transmissions 
+                            if f"Transmission_{trans.transmission.replace(' ', '_')}" in final_features_template}
+
+    # Fuel Types
+    fuels = db.query(FuelType).all()
+    fuel_mapping = {fuel.ID: f"Fuel_type_{fuel.fuel_type.replace(' ', '_')}" 
+                   for fuel in fuels 
+                   if f"Fuel_type_{fuel.fuel_type.replace(' ', '_')}" in final_features_template}
+
+    # Body Styles
+    body_styles = db.query(BodyStyle).all()
+    body_style_mapping = {body.ID: f"Body_style_{body.body_style.replace(' ', '_')}" 
+                          for body in body_styles 
+                          if f"Body_style_{body.body_style.replace(' ', '_')}" in final_features_template}
+
+    # Colors
+    colors = db.query(Color).all()
+    color_mapping = {color.ID: f"Color_{color.color.replace(' ', '_')}" 
+                     for color in colors 
+                     if f"Color_{color.color.replace(' ', '_')}" in final_features_template}
+
+    # Options
+    options = db.query(Option).all()
+    option_mapping = {opt.ID: f"Options_{opt.option.replace(' ', '_')}" 
+                     for opt in options 
+                     if f"Options_{opt.option.replace(' ', '_')}" in final_features_template}
+
+    # Damages
+    damages = db.query(Damage).all()
+    damage_mapping = {dam.ID: f"Damage_{dam.damage.replace(' ', '_')}" 
+                      for dam in damages 
+                      if f"Damage_{dam.damage.replace(' ', '_')}" in final_features_template}
+
+# Dependency to initialize mappings once at startup
+@app.on_event("startup")
+def startup_event():
+    db = next(get_db())
+    initialize_mappings(db)
 
 def get_name_from_database(db: Session, table, id_value: int):
     """
@@ -35,7 +126,7 @@ def get_name_from_database(db: Session, table, id_value: int):
                record.option if table == Option else record.damage if table == Damage else None
     return None
 
-#Define the data model for prediction input
+# Define the data model for prediction input
 class PricePredictionRequest(BaseModel):
     features: list
 
@@ -43,7 +134,7 @@ class DaysToSellPredictionRequest(BaseModel):
     price: int
 
 # Load models
-MODEL_DIR = os.getenv("MODEL_STORAGE_PATH", "myapp\model\models")
+MODEL_DIR = os.getenv("MODEL_STORAGE_PATH", "myapp\\model\\models")
 price_model_path = os.path.join(MODEL_DIR, "elastic_net_price_model.pkl")
 sell_time_model_path = os.path.join(MODEL_DIR, "catboost_sell_time_model.pkl")
 
@@ -54,6 +145,7 @@ try:
         sell_time_model = pickle.load(f)
 except FileNotFoundError:
     price_model = None
+    sell_time_model = None  # Ensure sell_time_model is also set to None
 
 class OptionResponse(BaseModel):
     id: int
@@ -72,7 +164,6 @@ class PredictionRequest(BaseModel):
     mileage: int = Field(..., ge=0, le=1_000_000, description="Mileage must be a positive integer up to 1,000,000.")  # Reasonable max mileage
     horsepower: int = Field(..., ge=0, le=2000, description="Horsepower must be between 0 and 2000.")  # Extreme upper limit for high-performance cars
     numPrevOwners: int = Field(..., ge=0, le=20, description="Number of previous owners must be between 0 and 20.")  # Reasonable max for used cars
-    
 
 # Define the response model for the prediction
 class Prediction(BaseModel):
@@ -113,7 +204,6 @@ async def get_model_options(makeId: int, db: Session = Depends(get_db)):
         )
         
     return [{"id": model.ID, "name": model.model} for model in models]
-
 
 @app.get("/fuel-type-options", response_model=List[OptionResponse])
 async def get_fuel_type_options(db: Session = Depends(get_db)):
@@ -157,7 +247,6 @@ async def get_damage_options(db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No Damage Options available.")
     return [{"id": damage.ID, "name": damage.damage} for damage in damages]
 
-
 @app.post("/predict", response_model=Prediction)
 async def make_prediction(data: PredictionRequest, db: Session = Depends(get_db)):
     """
@@ -188,24 +277,6 @@ async def make_prediction(data: PredictionRequest, db: Session = Depends(get_db)
         raise HTTPException(status_code=400, detail="Invalid ID provided for one or more fields.")
 
     # Prepare the features for prediction models
-    final_features_template = ['Mileage', 'Year', 'Horsepower', 'Num_of_prev_owners', 'Car_make_BMW',
-       'Car_make_Chevrolet', 'Car_make_Ford', 'Car_make_Mercedes-Benz',
-       'Car_make_Toyota', 'Model_5 Series', 'Model_A4', 'Model_A6',
-       'Model_C-Class', 'Model_Camry', 'Model_Corolla', 'Model_E-Class',
-       'Model_Equinox', 'Model_Explorer', 'Model_F-150', 'Model_Fusion',
-       'Model_GLC', 'Model_Impala', 'Model_Malibu', 'Model_Mustang',
-       'Model_Prius', 'Model_Q5', 'Model_Q7', 'Model_RAV4', 'Model_S-Class',
-       'Model_Silverado', 'Model_X3', 'Model_X5', 'Transmission_Manual',
-       'Options_Base', 'Options_Full', 'Options_Luxe', 'Color_black',
-       'Color_blue', 'Color_red', 'Color_silver', 'Color_white',
-       'Damage_Medium', 'Damage_Total', 'Body_style_Coupe',
-       'Body_style_Hatchback', 'Body_style_SUV', 'Body_style_Sedan',
-       'Body_style_Truck', 'Body_style_Van', 'Body_style_Wagon',
-       'Fuel_type_Electric', 'Fuel_type_Gasoline', 'Fuel_type_Hybrid',
-       'Fuel_type_Plug-in Hybrid']
-    
-
-
     transformed_features = {feature: 0 for feature in final_features_template}
 
     # Assign numerical features
@@ -214,97 +285,45 @@ async def make_prediction(data: PredictionRequest, db: Session = Depends(get_db)
     transformed_features['Horsepower'] = data.horsepower
     transformed_features['Num_of_prev_owners'] = data.numPrevOwners
 
-    # Map categorical features to their one-hot encoded counterparts
-    make_mapping = {
-    1: 'Car_make_BMW',
-    2: 'Car_make_Chevrolet',
-    3: 'Car_make_Ford',
-    4: 'Car_make_Mercedes-Benz',
-    5: 'Car_make_Toyota'
-}
+    # Assign one-hot encoded features using dynamic mappings
+    # Only set features if they exist in the mapping
+    make_feature = make_mapping.get(data.makeId)
+    if make_feature:
+        transformed_features[make_feature] = 1
 
-    model_mapping = {
-        1: 'Model_5 Series',
-        2: 'Model_A4',
-        3: 'Model_A6',
-        4: 'Model_C-Class',
-        5: 'Model_Camry',
-        6: 'Model_Corolla',
-        7: 'Model_E-Class',
-        8: 'Model_Equinox',
-        9: 'Model_Explorer',
-        10: 'Model_F-150',
-        11: 'Model_Fusion',
-        12: 'Model_GLC',
-        13: 'Model_Impala',
-        14: 'Model_Malibu',
-        15: 'Model_Mustang',
-        16: 'Model_Prius',
-        17: 'Model_Q5',
-        18: 'Model_Q7',
-        19: 'Model_RAV4',
-        20: 'Model_S-Class',
-        21: 'Model_Silverado',
-        22: 'Model_X3',
-        23: 'Model_X5'
-    }
+    model_feature = model_mapping.get(data.modelId)
+    if model_feature:
+        transformed_features[model_feature] = 1
 
-    transmission_mapping = {
-        1: 'Transmission_Manual',
-        2: 'Transmission_Automatic'  # Assuming other options
-    }
+    transmission_feature = transmission_mapping.get(data.transmissionId)
+    if transmission_feature:
+        transformed_features[transmission_feature] = 1
 
-    fuel_mapping = {
-        1: 'Fuel_type_Electric',
-        2: 'Fuel_type_Gasoline',
-        3: 'Fuel_type_Hybrid',
-        4: 'Fuel_type_Plug-in Hybrid'
-    }
+    fuel_feature = fuel_mapping.get(data.fueltypeId)
+    if fuel_feature:
+        transformed_features[fuel_feature] = 1
 
-    body_style_mapping = {
-        1: 'Body_style_Coupe',
-        2: 'Body_style_Hatchback',
-        3: 'Body_style_SUV',
-        4: 'Body_style_Sedan',
-        5: 'Body_style_Truck',
-        6: 'Body_style_Van',
-        7: 'Body_style_Wagon'
-    }
+    body_style_feature = body_style_mapping.get(data.bodyStyleId)
+    if body_style_feature:
+        transformed_features[body_style_feature] = 1
 
-    color_mapping = {
-        1: 'Color_black',
-        2: 'Color_blue',
-        3: 'Color_red',
-        4: 'Color_silver',
-        5: 'Color_white'
-    }
+    color_feature = color_mapping.get(data.colorId)
+    if color_feature:
+        transformed_features[color_feature] = 1
 
-    option_mapping = {
-        1: 'Options_Base',
-        2: 'Options_Full',
-        3: 'Options_Luxe'
-    }
+    option_feature = option_mapping.get(data.optionId)
+    if option_feature:
+        transformed_features[option_feature] = 1
 
-    damage_mapping = {
-        1: 'Damage_Medium',
-        2: 'Damage_Total',
-        3: 'Damage_None' 
-    }
-
-
-    # Update one-hot encoded fields based on input IDs
-    transformed_features[make_mapping.get(data.makeId, '')] = 1
-    transformed_features[model_mapping.get(data.modelId, '')] = 1
-    transformed_features[transmission_mapping.get(data.transmissionId, '')] = 1
-    transformed_features[fuel_mapping.get(data.fueltypeId, '')] = 1
-    transformed_features[body_style_mapping.get(data.bodyStyleId, '')] = 1
-    transformed_features[color_mapping.get(data.colorId, '')] = 1
-    transformed_features[option_mapping.get(data.optionId, '')] = 1
-    transformed_features[damage_mapping.get(data.damageId, '')] = 1
+    damage_feature = damage_mapping.get(data.damageId)
+    if damage_feature:
+        transformed_features[damage_feature] = 1
 
     # Convert transformed features to the input format expected by the model
-    final_features = [transformed_features[feature] for feature in final_features_template]
-
+    try:
+        final_features = [transformed_features[feature] for feature in final_features_template]
+    except KeyError as e:
+        raise HTTPException(status_code=400, detail=f"Feature missing in final_features_template: {str(e)}")
 
     # Predict price using the ElasticNet model
     if not price_model:
@@ -318,15 +337,17 @@ async def make_prediction(data: PredictionRequest, db: Session = Depends(get_db)
     if not sell_time_model:
         raise HTTPException(status_code=500, detail="Days to sell model not loaded")
     try:
-        final_features.append(np.log1p(predicted_price))
-        predicted_time = sell_time_model.predict([final_features])[0]
+        # Append the log-transformed predicted price as a feature
+        features_for_sell_time = final_features.copy()
+        features_for_sell_time.append(np.log1p(predicted_price))
+        predicted_time = sell_time_model.predict([features_for_sell_time])[0]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error predicting days to sell: {str(e)}")
 
     # Return the prediction along with the names of the fields
     return {
-        "price": np.exp(predicted_price),
-        "time": predicted_time,
+        "price": float(predicted_price),  # Assuming the model outputs the actual price
+        "time": float(predicted_time),
         "make": make_name,
         "model": model_name,
         "transmission": transmission_name,
@@ -340,4 +361,3 @@ async def make_prediction(data: PredictionRequest, db: Session = Depends(get_db)
         "horsepower": data.horsepower,
         "numPrevOwners": data.numPrevOwners
     }
-
